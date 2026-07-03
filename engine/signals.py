@@ -35,6 +35,21 @@ def momentum(close: pd.DataFrame, lookback: int = 126, skip: int = 0, long_only:
     return sig
 
 
+def mean_reversion(close: pd.DataFrame, lookback: int = 20, z_entry: float = 1.0,
+                   long_only: bool = False) -> pd.DataFrame:
+    """Z-score mean reversion: fade stretched prices. When price sits more than
+    `z_entry` standard deviations above its rolling mean, go short (it is
+    expected to fall back); more than `z_entry` below, go long; flat inside the
+    band. The countertrend counterpart to the two trend signals."""
+    mean = close.rolling(lookback).mean()
+    std = close.rolling(lookback).std(ddof=1)
+    z = (close - mean) / std
+    sig = (-np.sign(z)).where(z.abs() > z_entry, 0.0)
+    if long_only:
+        sig = sig.clip(lower=0.0)
+    return sig
+
+
 def combined(close: pd.DataFrame, short: int, long: int, lookback: int,
              long_only: bool = False) -> pd.DataFrame:
     """Equal-weight blend of MA crossover and momentum. Positions are
@@ -52,7 +67,7 @@ def vol_target(signal: pd.DataFrame, returns: pd.DataFrame, target_vol: float = 
     return signal * scale
 
 
-SIGNAL_TYPES = ("MA Crossover", "Time-Series Momentum", "Combined")
+SIGNAL_TYPES = ("MA Crossover", "Time-Series Momentum", "Mean Reversion (Z-Score)", "Combined")
 
 
 def build_signal(close: pd.DataFrame, signal_type: str, long_only: bool = False,
@@ -64,6 +79,8 @@ def build_signal(close: pd.DataFrame, signal_type: str, long_only: bool = False,
         sig = ma_crossover(close, params["short"], params["long"], long_only)
     elif signal_type == "Time-Series Momentum":
         sig = momentum(close, params["lookback"], params.get("skip", 0), long_only)
+    elif signal_type == "Mean Reversion (Z-Score)":
+        sig = mean_reversion(close, params["lookback"], params["z_entry"], long_only)
     elif signal_type == "Combined":
         sig = combined(close, params["short"], params["long"], params["lookback"], long_only)
     else:

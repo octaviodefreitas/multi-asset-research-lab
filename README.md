@@ -14,9 +14,10 @@ execution-quality analysis, built with Python, pandas and Streamlit.
 - Universe of six asset classes: US equities (SPY), US bonds (AGG), gold (GLD),
   EUR/USD FX spot, crude oil (USO) and Bitcoin (BTC-USD), via free daily data
   from Yahoo Finance with a local parquet cache.
-- Two systematic trend signals — moving-average crossover (incl. the classic
-  50/200 golden cross) and time-series momentum — plus an optional
-  volatility-targeting overlay, all fully vectorized with pandas.
+- Three signal families — moving-average crossover (incl. the classic 50/200
+  golden cross), time-series momentum, and z-score mean reversion
+  (countertrend) — plus an optional volatility-targeting overlay, all fully
+  vectorized with pandas.
 - **No lookahead bias**: a signal observed at the close of day *t* is only
   applied to the return from *t* to *t+1* (and there is a unit test proving it).
 - Backtest net of transaction costs, per asset and as an equal-weight portfolio,
@@ -24,6 +25,10 @@ execution-quality analysis, built with Python, pandas and Streamlit.
 - **Walk-forward validation**: parameters are re-selected on expanding in-sample
   windows and evaluated strictly out-of-sample, so the headline curve is not a
   single curve-fit backtest.
+- **Robustness analytics**: a parameter-sensitivity Sharpe heatmap (one full
+  backtest per grid cell — plateau vs overfit spike), a monthly-returns
+  heatmap, a rolling 1-year Sharpe, and a cross-asset strategy correlation
+  matrix showing the diversification benefit.
 
 **Tab 2 — Execution Simulation**
 - Takes a rebalancing order and simulates executing it via **TWAP, VWAP and POV**

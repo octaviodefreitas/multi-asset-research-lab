@@ -58,6 +58,33 @@ def test_invalid_windows_raise(close):
         signals.momentum(close, lookback=10, skip=10)
 
 
+def test_mean_reversion_no_lookahead(close):
+    sig = signals.mean_reversion(close, lookback=20, z_entry=1.0)
+    tampered = close.copy()
+    tampered.iloc[300:] *= 5.0
+    sig_tampered = signals.mean_reversion(tampered, lookback=20, z_entry=1.0)
+    pd.testing.assert_frame_equal(sig.iloc[:300], sig_tampered.iloc[:300])
+
+
+def test_mean_reversion_fades_stretched_prices():
+    idx = pd.bdate_range("2020-01-01", periods=40)
+    flat = np.full(40, 100.0) + np.tile([0.1, -0.1], 20)  # tiny noise, well inside the band
+    spike_up = flat.copy()
+    spike_up[-1] = 120.0
+    spike_down = flat.copy()
+    spike_down[-1] = 80.0
+    up = signals.mean_reversion(pd.DataFrame({"A": spike_up}, index=idx), 20, 1.0)
+    down = signals.mean_reversion(pd.DataFrame({"A": spike_down}, index=idx), 20, 1.0)
+    assert up["A"].iloc[-1] == -1.0    # stretched above the mean -> short
+    assert down["A"].iloc[-1] == 1.0   # stretched below the mean -> long
+    assert up["A"].iloc[-2] == 0.0     # inside the band -> flat
+
+
+def test_mean_reversion_long_only_never_short(close):
+    sig = signals.mean_reversion(close, 20, 1.0, long_only=True)
+    assert (sig.fillna(0) >= 0).all().all()
+
+
 def test_vol_target_caps_leverage(close):
     rets = close.pct_change()
     sig = signals.ma_crossover(close, 5, 20)

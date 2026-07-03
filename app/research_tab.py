@@ -15,9 +15,18 @@ WF_GRIDS = {
     "MA Crossover": [{"short": s, "long": l}
                      for s, l in [(10, 50), (10, 100), (20, 100), (20, 200), (50, 150), (50, 200)]],
     "Time-Series Momentum": [{"lookback": lb} for lb in (21, 63, 126, 252)],
+    "Mean Reversion (Z-Score)": [{"lookback": lb, "z_entry": z}
+                                 for lb in (10, 20, 40, 60) for z in (0.5, 1.0, 1.5)],
     "Combined": [{"short": s, "long": l, "lookback": lb}
                  for s, l in [(20, 100), (50, 200)] for lb in (63, 126, 252)],
 }
+
+# Grids scanned by the parameter-sensitivity heatmap.
+SENS_SHORTS = [5, 10, 20, 30, 50, 75]
+SENS_LONGS = [100, 125, 150, 200, 250, 300]
+SENS_MOM_LOOKBACKS = [21, 42, 63, 84, 126, 168, 252]
+SENS_MR_LOOKBACKS = [10, 15, 20, 30, 40, 60]
+SENS_MR_Z = [0.5, 0.75, 1.0, 1.5, 2.0]
 
 METRIC_FORMATS = {
     "CAGR": "{:.2%}", "Ann. Vol": "{:.2%}", "Sharpe": "{:.2f}", "Sortino": "{:.2f}",
@@ -28,6 +37,30 @@ METRIC_FORMATS = {
 @st.cache_data(ttl=3600, show_spinner="Downloading market data (cached locally after first load)…")
 def get_panel(tickers: tuple, start: str) -> pd.DataFrame:
     return load_universe(list(tickers), start)
+
+
+@st.cache_data(show_spinner="Scanning the parameter grid (one backtest per cell)…")
+def sensitivity_grid(panel: pd.DataFrame, signal_type: str, long_only: bool,
+                     vol_target_on: bool, target_vol: float, cost_bps: float,
+                     fixed: dict):
+    """Portfolio Sharpe for every parameter combination in a pre-declared grid."""
+    valid = panel.notna()
+
+    def sharpe_of(p: dict) -> float:
+        sig = signals.build_signal(panel, signal_type, long_only=long_only,
+                                   vol_target_on=vol_target_on, target_vol=target_vol, **p)
+        bt = backtest.run_backtest(panel, sig, cost_bps)
+        return metrics.sharpe_ratio(backtest.equal_weight_returns(bt.strategy_returns, valid))
+
+    if signal_type in ("MA Crossover", "Combined"):
+        data = [[sharpe_of({"short": s, "long": l, **fixed}) for l in SENS_LONGS]
+                for s in SENS_SHORTS]
+        return pd.DataFrame(data, index=SENS_SHORTS, columns=SENS_LONGS)
+    if signal_type == "Time-Series Momentum":
+        return pd.Series({lb: sharpe_of({"lookback": lb}) for lb in SENS_MOM_LOOKBACKS})
+    data = [[sharpe_of({"lookback": lb, "z_entry": z}) for z in SENS_MR_Z]
+            for lb in SENS_MR_LOOKBACKS]
+    return pd.DataFrame(data, index=SENS_MR_LOOKBACKS, columns=SENS_MR_Z)
 
 
 def render() -> None:
@@ -53,7 +86,9 @@ def render() -> None:
             signal_type = st.selectbox("Signal", signals.SIGNAL_TYPES,
                                        help="MA Crossover: fast vs slow moving average. "
                                             "Momentum: sign of the trailing return. "
-                                            "Combined: average of the two.")
+                                            "Mean Reversion: fade prices stretched away from "
+                                            "their rolling mean (countertrend). "
+                                            "Combined: average of the two trend signals.")
             direction = st.radio("Direction", ["Long / Short", "Long / Flat"], horizontal=True,
                                  help="Long/Flat never shorts — it goes to cash on a sell signal.")
         with c3:
@@ -75,6 +110,14 @@ def render() -> None:
         if signal_type in ("Time-Series Momentum", "Combined"):
             with p3:
                 params["lookback"] = st.slider("Momentum lookback (days)", 21, 252, 126, 21)
+        if signal_type == "Mean Reversion (Z-Score)":
+            with p1:
+                params["lookback"] = st.slider("Z-score lookback (days)", 5, 100, 20, 5,
+                                               help="Window for the rolling mean and std the price is compared against.")
+            with p2:
+                params["z_entry"] = st.slider("Entry threshold (std devs)", 0.5, 2.5, 1.0, 0.25,
+                                              help="How stretched the price must be before fading it. "
+                                                   "Wider bands trade less but with more conviction.")
         target_vol = 0.10
         if vol_target_on:
             with p4:
@@ -157,6 +200,58 @@ def render() -> None:
         "of trend-following."
     )
 
+    # ------------------------------------------------------------- tearsheet
+    st.markdown("#### Performance through time")
+    st.markdown(
+        "Headline numbers hide *when* a strategy earns its keep. The heatmap shows every "
+        "individual month; the rolling Sharpe shows whether risk-adjusted performance is "
+        "stable across market regimes or driven by one lucky stretch."
+    )
+    t_left, t_right = st.columns([1, 1])
+
+    with t_left:
+        monthly = (1.0 + port).resample("ME").prod() - 1.0
+        pivot = pd.DataFrame({"r": monthly, "Year": monthly.index.year,
+                              "Month": monthly.index.month}).pivot(
+            index="Year", columns="Month", values="r")
+        month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        mh = go.Figure(go.Heatmap(
+            z=pivot.values * 100, x=month_names[:pivot.shape[1]],
+            y=pivot.index.astype(str), colorscale="RdYlGn", zmid=0,
+            text=np.round(pivot.values * 100, 1), texttemplate="%{text}",
+            textfont=dict(size=9), colorbar=dict(title="%"),
+            hovertemplate="%{y} %{x}: %{z:.1f}%<extra></extra>"))
+        style_fig(mh, "Monthly returns (%)", height=420)
+        mh.update_layout(hovermode="closest")
+        mh.update_yaxes(autorange="reversed")
+        st.plotly_chart(mh, width="stretch")
+        st.caption(
+            "**How to read this:** each cell is one calendar month of the portfolio. "
+            "You want scattered reds inside mostly green — clusters of deep red rows "
+            "reveal regimes where the signal breaks down (e.g. sharp reversals that "
+            "whipsaw trend-followers)."
+        )
+
+    with t_right:
+        window = metrics.TRADING_DAYS
+        roll_strat = port.rolling(window).mean() / port.rolling(window).std(ddof=1) * np.sqrt(window)
+        roll_bench = bench.rolling(window).mean() / bench.rolling(window).std(ddof=1) * np.sqrt(window)
+        rs = go.Figure()
+        rs.add_trace(go.Scatter(x=roll_bench.index, y=roll_bench, name="Buy & Hold",
+                                line=dict(color=GREY, width=1.2, dash="dot")))
+        rs.add_trace(go.Scatter(x=roll_strat.index, y=roll_strat, name="Strategy",
+                                line=dict(color=PRIMARY, width=2.0)))
+        rs.add_hline(y=0, line_color="#2C3644")
+        style_fig(rs, "Rolling 1-year Sharpe ratio", height=420, y_title="Sharpe")
+        st.plotly_chart(rs, width="stretch")
+        st.caption(
+            "**How to read this:** the Sharpe ratio recomputed over a sliding 1-year "
+            "window. A strategy that hugs a stable positive level is far more trustworthy "
+            "than one with the same average Sharpe made of wild swings — and stretches "
+            "below zero show how long an investor would have had to sit through losses."
+        )
+
     # ------------------------------------------------------------- per-asset table
     st.markdown("#### Per-asset breakdown (net of costs)")
     rows = {}
@@ -171,6 +266,86 @@ def render() -> None:
         .background_gradient(subset=["Sharpe"], cmap="Greens", vmin=-0.5, vmax=1.5),
         width="stretch",
     )
+
+    # ------------------------------------------------------------- diversification & robustness
+    st.markdown("#### Diversification and parameter robustness")
+    st.markdown(
+        "Two questions every allocator asks. **Left:** does combining assets actually "
+        "diversify — are the per-asset strategies genuinely uncorrelated? **Right:** is the "
+        "performance robust to the parameter choice, or did we just find one lucky setting?"
+    )
+    d_left, d_right = st.columns([1, 1])
+
+    with d_left:
+        corr = bt.strategy_returns.where(valid).corr()
+        ch = go.Figure(go.Heatmap(
+            z=corr.values, x=corr.columns, y=corr.index,
+            colorscale="RdBu", zmin=-1, zmax=1,
+            text=np.round(corr.values, 2), texttemplate="%{text}",
+            colorbar=dict(title="ρ"),
+            hovertemplate="%{y} vs %{x}: %{z:.2f}<extra></extra>"))
+        style_fig(ch, "Correlation of per-asset strategy returns", height=440)
+        ch.update_layout(hovermode="closest")
+        ch.update_yaxes(autorange="reversed")
+        st.plotly_chart(ch, width="stretch")
+        st.caption(
+            "**How to read this:** each cell is the correlation between the strategy run on "
+            "two different assets (+1 = move together, 0 = independent). The closer the "
+            "off-diagonal cells are to zero, the more the equal-weight portfolio smooths "
+            "out — six independent return streams cut portfolio volatility far more than "
+            "six copies of the same bet. This is the free lunch of diversification."
+        )
+
+    with d_right:
+        fixed = {"lookback": params["lookback"]} if signal_type == "Combined" else {}
+        grid = sensitivity_grid(panel, signal_type, long_only, vol_target_on,
+                                target_vol, cost_bps, fixed)
+        if isinstance(grid, pd.Series):  # momentum: one parameter -> bar chart
+            colors = [PRIMARY if lb == min(grid.index, key=lambda x: abs(x - params["lookback"]))
+                      else "#2C3644" for lb in grid.index]
+            sh = go.Figure(go.Bar(x=grid.index.astype(str), y=grid.values,
+                                  marker_color=colors,
+                                  text=np.round(grid.values, 2), textposition="outside"))
+            style_fig(sh, "Portfolio Sharpe by momentum lookback (days)", height=440,
+                      y_title="Sharpe")
+            sh.update_layout(showlegend=False, hovermode="closest")
+            st.plotly_chart(sh, width="stretch")
+            st.caption(
+                "**How to read this:** each bar is a full backtest at a different lookback "
+                "(your current setting highlighted). Similar Sharpe across neighbouring "
+                "lookbacks means the effect is real; one tall bar surrounded by short ones "
+                "means the 'best' parameter is likely noise."
+            )
+        else:
+            x_title, y_title_h = (("Slow MA window", "Fast MA window")
+                                  if signal_type in ("MA Crossover", "Combined")
+                                  else ("Entry threshold (std devs)", "Z-score lookback"))
+            sh = go.Figure(go.Heatmap(
+                z=grid.values, x=grid.columns, y=grid.index,
+                colorscale="RdYlGn", zmid=0,
+                text=np.round(grid.values, 2), texttemplate="%{text}",
+                colorbar=dict(title="Sharpe"),
+                hovertemplate=f"{y_title_h} %{{y}}, {x_title.lower()} %{{x}}: "
+                              "Sharpe %{z:.2f}<extra></extra>"))
+            cur = ((params["long"], params["short"])
+                   if signal_type in ("MA Crossover", "Combined")
+                   else (params["z_entry"], params["lookback"]))
+            sh.add_trace(go.Scatter(x=[cur[0]], y=[cur[1]], mode="markers", name="Your setting",
+                                    marker=dict(symbol="star", size=15, color="#E6EDF3",
+                                                line=dict(color="#0E1117", width=1))))
+            style_fig(sh, "Portfolio Sharpe across the parameter grid", height=440,
+                      x_title=x_title, y_title=y_title_h)
+            sh.update_layout(hovermode="closest", showlegend=False)
+            sh.update_xaxes(tickvals=list(grid.columns))
+            sh.update_yaxes(tickvals=list(grid.index))
+            st.plotly_chart(sh, width="stretch")
+            st.caption(
+                "**How to read this:** every cell is a complete backtest with those "
+                "parameters (★ = your current sliders). A broad plateau of similar green "
+                "means the signal works across many settings — evidence it captures "
+                "something real. A single bright cell in a sea of red is the classic "
+                "fingerprint of an overfit backtest, and walking forward it would likely fail."
+            )
 
     # ------------------------------------------------------------- walk-forward
     st.markdown("#### Walk-forward validation — is this curve-fit?")
