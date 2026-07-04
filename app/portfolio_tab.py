@@ -149,7 +149,7 @@ def render() -> None:
         reg = factors.factor_regression(ew, ff)
     except Exception:
         st.info("Factor data (Ken French library) is temporarily unavailable — "
-                "this section will reappear when the source responds.", icon="📡")
+                "this section will reappear when the source responds.")
         return
 
     f1, f2, f3 = st.columns(3)

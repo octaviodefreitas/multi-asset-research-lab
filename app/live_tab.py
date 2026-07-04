@@ -73,8 +73,7 @@ long/short, equal-weight across {len(config["universe"])} assets,
         st.info(
             f"The track record began accruing on {freeze:%d %B %Y}. Early days — every "
             "market day from here on adds to it automatically. Check back over the "
-            "coming weeks and months.",
-            icon="🌱",
+            "coming weeks and months."
         )
 
     # ------------------------------------------------------------- chart

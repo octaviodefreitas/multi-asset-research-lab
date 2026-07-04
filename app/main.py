@@ -40,7 +40,7 @@ st.warning(
     icon="⚠️",
 )
 
-with st.expander("🎯  **New here? What this is, why it exists, and how to explore it** — start here"):
+with st.expander("**About this project — what it is, why it exists, and how to explore it**"):
     st.markdown(
         """
 **What this is.** An end-to-end demonstration of how a systematic trading strategy
@@ -87,11 +87,11 @@ values look like.
     )
 
 tab_research, tab_stock, tab_portfolio, tab_execution, tab_live = st.tabs([
-    "📊  Signal Research & Backtest",
-    "📈  Single Stock vs Benchmark",
-    "🏗️  Portfolio & Risk",
-    "⚡  Execution Simulation",
-    "🔴  Live Forward Track",
+    "Signal Research & Backtest",
+    "Single Stock vs Benchmark",
+    "Portfolio & Risk",
+    "Execution Simulation",
+    "🔴 Live Forward Track",
 ])
 
 with tab_research:

@@ -1,4 +1,4 @@
-# Pinned for reproducible local and cloud environments
+# Dependencies pinned for reproducible local and cloud environments
 streamlit==1.58.0
 yfinance==1.5.1
 pandas==3.0.3
