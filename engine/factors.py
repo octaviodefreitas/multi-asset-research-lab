@@ -52,8 +52,9 @@ def _parse_ff_csv(text: str) -> pd.DataFrame:
         header = [f"F{i}" for i in range(ncols)]
     df = pd.DataFrame(rows, columns=["Date"] + header)
     df["Date"] = pd.to_datetime(df["Date"], format="%Y%m%d")
-    df = df.set_index("Date").astype(float) / 100.0
-    return df.where(df > -0.9)  # -99.99 / -999 are missing-value sentinels
+    df = df.set_index("Date").replace("", np.nan).astype(float) / 100.0
+    df = df.where(df > -0.9)  # -99.99 / -999 are missing-value sentinels
+    return df.dropna(axis=1, how="all")  # trailing commas create phantom columns
 
 
 def load_ff_factors(max_age_hours: float = 7 * 24) -> pd.DataFrame:
@@ -65,7 +66,7 @@ def load_ff_factors(max_age_hours: float = 7 * 24) -> pd.DataFrame:
             return pd.read_parquet(CACHE)
     try:
         factors = _parse_ff_csv(_fetch_zip_csv(FF_FACTORS_ZIP))
-        mom = _parse_ff_csv(_fetch_zip_csv(FF_MOMENTUM_ZIP))
+        mom = _parse_ff_csv(_fetch_zip_csv(FF_MOMENTUM_ZIP)).iloc[:, [0]]
         mom.columns = ["Mom"]
         df = factors.join(mom, how="inner")
         CACHE.parent.mkdir(exist_ok=True)

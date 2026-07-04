@@ -45,12 +45,14 @@ def test_ff_csv_parser_handles_preamble_and_annual_section():
         ",Mkt-RF,SMB,HML,RF\n"
         "19260701,0.10,-0.25,-0.27,0.009\n"
         "19260702,0.45,-0.33,-0.06,0.009\n"
+        "19260706,0.17,,-0.04,0.009\n"
         "\n"
         "Annual Factors: January-December\n"
         ",Mkt-RF,SMB,HML,RF\n"
         "1927,29.47,-2.46,-3.75,3.12\n"
     )
     df = factors._parse_ff_csv(text)
-    assert len(df) == 2  # annual rows excluded
+    assert len(df) == 3  # annual rows excluded, daily rows kept
     assert list(df.columns) == ["Mkt-RF", "SMB", "HML", "RF"]
     assert df.iloc[0]["Mkt-RF"] == pytest.approx(0.0010)  # percent -> decimal
+    assert np.isnan(df.iloc[2]["SMB"])  # empty cell -> NaN, not a crash
