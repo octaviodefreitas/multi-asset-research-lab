@@ -22,6 +22,11 @@ st.markdown(
         Systematic signal research, walk-forward backtesting and execution-quality
         analysis across equities, bonds, gold, FX, oil and crypto.
       </p>
+      <p style="color: #E6EDF3; font-size: 0.95rem; margin-top: 0.35rem;">
+        Built by <b>Octavio de Freitas</b> ·
+        <a href="https://github.com/octaviodefreitas/multi-asset-research-lab"
+           style="color: #00D4AA; text-decoration: none;">View source on GitHub</a>
+      </p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -47,6 +52,9 @@ with tab_execution:
 
 st.markdown(
     "<hr style='border-color:#1F2733'><p style='color:#8B949E; font-size:0.85rem;'>"
+    "Built by Octavio de Freitas · "
+    "<a href='https://github.com/octaviodefreitas/multi-asset-research-lab' "
+    "style='color:#00D4AA; text-decoration:none;'>GitHub</a> · "
     "Data: Yahoo Finance (daily, adjusted). Simulated research only — not investment advice.</p>",
     unsafe_allow_html=True,
 )
