@@ -1,4 +1,4 @@
-# App dependencies
+# Application dependencies
 streamlit>=1.36
 yfinance>=0.2.40
 pandas>=2.0

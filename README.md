@@ -39,7 +39,17 @@ execution-quality analysis, built with Python, pandas and Streamlit.
   index: **alpha, beta, tracking error, information ratio**, relative-strength
   curve and drawdown comparison.
 
-**Tab 3 — Execution Simulation**
+**Tab 3 — Portfolio & Risk**
+- Three portfolio-construction schemes on the same underlying signals — equal
+  weight, inverse volatility (risk parity) and monthly re-estimated
+  mean-variance (tangency) — compared out of sample, all causal.
+- **Monte Carlo block bootstrap** of the strategy's history: fan chart of
+  next-12-month outcomes, tail percentiles and probability of a losing year.
+- **Fama-French factor regression** (Mkt-RF, SMB, HML, Mom, daily data from
+  Ken French's library): factor loadings with t-stats, R², and annualized
+  alpha — is it real alpha or repackaged factor beta?
+
+**Tab 4 — Execution Simulation**
 - Takes a rebalancing order and simulates executing it via **TWAP, VWAP and POV**
   over a configurable intraday horizon.
 - Cost model: half bid/ask spread on every fill, **square-root temporary market
@@ -48,6 +58,14 @@ execution-quality analysis, built with Python, pandas and Streamlit.
 - Monte Carlo comparison of **implementation shortfall** vs the arrival price —
   mean cost, cost dispersion (timing risk), full decomposition, and fill-rate /
   opportunity-cost accounting when POV fails to complete.
+
+**Tab 5 — Live Forward Track**
+- Strategy parameters are frozen in `live_config.json`; the git commit
+  timestamp proves they were fixed before the subsequent data existed.
+- Because the strategy is deterministic given that file, recomputing it daily
+  from fresh data reconstructs exactly what a live run would have done — a
+  genuine, verifiable out-of-sample record that grows every trading day,
+  with the strategy's current positions shown live.
 
 ## Run it locally
 
@@ -86,17 +104,24 @@ The app is stateless and needs no secrets, so it deploys to
 │   ├── main.py           #   entry point, tabs, disclaimer
 │   ├── research_tab.py   #   signal research & backtest UI
 │   ├── stock_tab.py      #   single-stock vs benchmark UI (alpha/beta/IR)
+│   ├── portfolio_tab.py  #   weighting schemes, Monte Carlo, factor regression UI
 │   ├── execution_tab.py  #   execution simulation UI
+│   ├── live_tab.py       #   live forward-track UI
 │   └── theme.py          #   shared dark plotly styling
 ├── data/
 │   ├── loader.py         # yfinance download + parquet cache
 │   └── cache/            # cached OHLCV (gitignored)
 ├── engine/
-│   ├── signals.py        # MA crossover, momentum, vol targeting (causal, vectorized)
+│   ├── signals.py        # MA crossover, momentum, mean reversion, vol targeting
 │   ├── backtest.py       # positions, costs, walk-forward validation
-│   ├── metrics.py        # CAGR, Sharpe, Sortino, drawdown, Calmar, turnover, hit rate
+│   ├── metrics.py        # CAGR, Sharpe, Sortino, drawdown, alpha/beta/IR, ...
+│   ├── portfolio.py      # equal-weight, inverse-vol, tangency weights (causal)
+│   ├── risk.py           # block-bootstrap Monte Carlo
+│   ├── factors.py        # Fama-French data + OLS factor regression
+│   ├── live.py           # frozen-strategy live track reconstruction
 │   └── execution.py      # TWAP/VWAP/POV, square-root impact, implementation shortfall
-└── tests/                # unit tests for signal, backtest, metric and execution math
+├── live_config.json      # frozen live-strategy definition (git history = proof)
+└── tests/                # unit tests for all of the financial math
 ```
 
 ## Methodology notes

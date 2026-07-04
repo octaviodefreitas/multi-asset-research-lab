@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import streamlit as st
 
-from app import execution_tab, research_tab, stock_tab
+from app import execution_tab, live_tab, portfolio_tab, research_tab, stock_tab
 
 st.set_page_config(
     page_title="Multi-Asset Research & Execution Lab",
@@ -67,9 +67,17 @@ unit tests for all of the financial math.
 3. In the **Single Stock vs Benchmark** tab, point the same engine at any
    individual stock (type any ticker!) and judge it the way equity managers are
    judged — by **alpha, beta and information ratio** against an index.
-4. In the **Execution Simulation** tab, see the part most backtests ignore:
+4. The **Portfolio & Risk** tab covers how much of each asset to hold (equal
+   weight vs risk parity vs mean-variance), the honest range of next-year
+   outcomes (Monte Carlo), and whether returns are real alpha or repackaged
+   factor exposure (Fama-French regression).
+5. In the **Execution Simulation** tab, see the part most backtests ignore:
    what the rebalancing trades would actually cost, comparing three standard
    execution algorithms (TWAP, VWAP, POV) across hundreds of simulated market days.
+6. The **Live Forward Track** tab is the strongest evidence in the app: the
+   strategy's parameters were frozen and committed to public git history, and
+   everything after that date is a genuine out-of-sample record that grows
+   daily and cannot be retro-fitted.
 
 **No finance background needed** — every chart has a plain-language
 *"How to read this"* caption underneath, and every slider has a tooltip (hover
@@ -78,9 +86,13 @@ values look like.
         """
     )
 
-tab_research, tab_stock, tab_execution = st.tabs(
-    ["📊  Signal Research & Backtest", "📈  Single Stock vs Benchmark", "⚡  Execution Simulation"]
-)
+tab_research, tab_stock, tab_portfolio, tab_execution, tab_live = st.tabs([
+    "📊  Signal Research & Backtest",
+    "📈  Single Stock vs Benchmark",
+    "🏗️  Portfolio & Risk",
+    "⚡  Execution Simulation",
+    "🔴  Live Forward Track",
+])
 
 with tab_research:
     research_tab.render()
@@ -88,8 +100,14 @@ with tab_research:
 with tab_stock:
     stock_tab.render()
 
+with tab_portfolio:
+    portfolio_tab.render()
+
 with tab_execution:
     execution_tab.render()
+
+with tab_live:
+    live_tab.render()
 
 st.markdown(
     "<hr style='border-color:#1F2733'><p style='color:#8B949E; font-size:0.85rem;'>"
