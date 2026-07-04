@@ -52,6 +52,24 @@ def test_hit_rate_only_counts_active_days():
     assert metrics.hit_rate(r, pos) == pytest.approx(0.5)
 
 
+def test_benchmark_relative_known_regression():
+    rng = np.random.default_rng(3)
+    b = series(rng.normal(0.0004, 0.01, 500))
+    r = 0.5 * b + 0.0002  # exact linear relation: beta 0.5, daily alpha 2 bps
+    rel = metrics.benchmark_relative(r, b)
+    assert rel["Beta"] == pytest.approx(0.5)
+    assert rel["Alpha (ann.)"] == pytest.approx(0.0002 * 252)
+    assert rel["Correlation"] == pytest.approx(1.0)
+
+
+def test_benchmark_relative_identical_series():
+    b = series(np.random.default_rng(4).normal(0, 0.01, 300))
+    rel = metrics.benchmark_relative(b, b)
+    assert rel["Beta"] == pytest.approx(1.0)
+    assert rel["Alpha (ann.)"] == pytest.approx(0.0)
+    assert rel["Tracking Error"] == pytest.approx(0.0)
+
+
 def test_annualized_turnover():
     t = series([0.02] * 100)
     assert metrics.annualized_turnover(t) == pytest.approx(0.02 * 252)

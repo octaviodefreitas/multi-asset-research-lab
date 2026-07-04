@@ -33,7 +33,13 @@ execution-quality analysis, built with Python, pandas and Streamlit.
   heatmap, a rolling 1-year Sharpe, and a cross-asset strategy correlation
   matrix showing the diversification benefit.
 
-**Tab 2 — Execution Simulation**
+**Tab 2 — Single Stock vs Benchmark**
+- The same signal engine applied to any individual equity (dropdown of large
+  caps or free-text Yahoo ticker), judged benchmark-relative against a chosen
+  index: **alpha, beta, tracking error, information ratio**, relative-strength
+  curve and drawdown comparison.
+
+**Tab 3 — Execution Simulation**
 - Takes a rebalancing order and simulates executing it via **TWAP, VWAP and POV**
   over a configurable intraday horizon.
 - Cost model: half bid/ask spread on every fill, **square-root temporary market
@@ -79,6 +85,7 @@ The app is stateless and needs no secrets, so it deploys to
 ├── app/                  # Streamlit frontend
 │   ├── main.py           #   entry point, tabs, disclaimer
 │   ├── research_tab.py   #   signal research & backtest UI
+│   ├── stock_tab.py      #   single-stock vs benchmark UI (alpha/beta/IR)
 │   ├── execution_tab.py  #   execution simulation UI
 │   └── theme.py          #   shared dark plotly styling
 ├── data/

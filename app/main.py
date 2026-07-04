@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import streamlit as st
 
-from app import execution_tab, research_tab
+from app import execution_tab, research_tab, stock_tab
 
 st.set_page_config(
     page_title="Multi-Asset Research & Execution Lab",
@@ -64,7 +64,10 @@ unit tests for all of the financial math.
 2. Scroll down to **walk-forward validation** — the honest test, where parameters
    are chosen only on past data and judged on unseen data. Comparing in-sample vs
    out-of-sample Sharpe is how professionals detect overfitting.
-3. In the **Execution Simulation** tab, see the part most backtests ignore:
+3. In the **Single Stock vs Benchmark** tab, point the same engine at any
+   individual stock (type any ticker!) and judge it the way equity managers are
+   judged — by **alpha, beta and information ratio** against an index.
+4. In the **Execution Simulation** tab, see the part most backtests ignore:
    what the rebalancing trades would actually cost, comparing three standard
    execution algorithms (TWAP, VWAP, POV) across hundreds of simulated market days.
 
@@ -75,12 +78,15 @@ values look like.
         """
     )
 
-tab_research, tab_execution = st.tabs(
-    ["📊  Signal Research & Backtest", "⚡  Execution Simulation"]
+tab_research, tab_stock, tab_execution = st.tabs(
+    ["📊  Signal Research & Backtest", "📈  Single Stock vs Benchmark", "⚡  Execution Simulation"]
 )
 
 with tab_research:
     research_tab.render()
+
+with tab_stock:
+    stock_tab.render()
 
 with tab_execution:
     execution_tab.render()

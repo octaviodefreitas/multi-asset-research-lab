@@ -80,6 +80,29 @@ def annualized_turnover(turnover: pd.Series) -> float:
     return turnover.mean() * TRADING_DAYS
 
 
+def benchmark_relative(returns: pd.Series, benchmark: pd.Series) -> dict[str, float]:
+    """CAPM-style statistics of a return stream measured against a benchmark.
+
+    Beta: sensitivity to benchmark moves. Alpha: annualized return left over
+    after removing beta × benchmark (the part not explained by market exposure).
+    Tracking error: volatility of the active return. Information ratio: active
+    return per unit of tracking error.
+    """
+    keys = ("Beta", "Alpha (ann.)", "Tracking Error", "Information Ratio", "Correlation")
+    df = pd.concat([returns, benchmark], axis=1, keys=["r", "b"]).dropna()
+    if len(df) < 2:
+        return dict.fromkeys(keys, np.nan)
+    r, b = df["r"], df["b"]
+    var_b = b.var(ddof=1)
+    beta = r.cov(b) / var_b if var_b > 0 else np.nan
+    alpha = (r.mean() - beta * b.mean()) * TRADING_DAYS if not np.isnan(beta) else np.nan
+    active = r - b
+    te = active.std(ddof=1) * np.sqrt(TRADING_DAYS)
+    ir = active.mean() * TRADING_DAYS / te if te > 0 else np.nan
+    return {"Beta": beta, "Alpha (ann.)": alpha, "Tracking Error": te,
+            "Information Ratio": ir, "Correlation": r.corr(b)}
+
+
 def summary(returns: pd.Series, positions: pd.Series | None = None,
             turnover: pd.Series | None = None) -> dict[str, float]:
     return {
