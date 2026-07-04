@@ -23,7 +23,7 @@ st.markdown(
         analysis across equities, bonds, gold, FX, oil and crypto.
       </p>
       <p style="color: #E6EDF3; font-size: 0.95rem; margin-top: 0.35rem;">
-        Built by <b>Octavio de Freitas</b> ·
+        Built by <b>Octavio De Freitas</b> ·
         <a href="https://github.com/octaviodefreitas/multi-asset-research-lab"
            style="color: #00D4AA; text-decoration: none;">View source on GitHub</a>
       </p>
@@ -40,6 +40,41 @@ st.warning(
     icon="⚠️",
 )
 
+with st.expander("🎯  **New here? What this is, why it exists, and how to explore it** — start here"):
+    st.markdown(
+        """
+**What this is.** An end-to-end demonstration of how a systematic trading strategy
+goes from idea to (simulated) execution — the same workflow a quantitative trading
+desk follows: get clean data, build a signal, backtest it honestly, stress-test it
+for overfitting, and then measure what it would actually cost to trade.
+
+**Why it exists.** I built this as a portfolio project to demonstrate, in working
+code rather than on a CV line, the core skills of quantitative trading research:
+data pipelines, vectorized backtesting in pandas, statistical validation
+(walk-forward testing, parameter-sensitivity analysis), market microstructure
+(implementation shortfall, square-root impact), and communicating results clearly.
+The full source code is open on
+[GitHub](https://github.com/octaviodefreitas/multi-asset-research-lab), including
+unit tests for all of the financial math.
+
+**How to explore it in 60 seconds.**
+1. In the **Signal Research & Backtest** tab, pick a signal and drag the sliders —
+   every chart and metric recomputes live. The teal line beating (or not beating!)
+   the grey dashed buy-and-hold line is the whole story of the strategy.
+2. Scroll down to **walk-forward validation** — the honest test, where parameters
+   are chosen only on past data and judged on unseen data. Comparing in-sample vs
+   out-of-sample Sharpe is how professionals detect overfitting.
+3. In the **Execution Simulation** tab, see the part most backtests ignore:
+   what the rebalancing trades would actually cost, comparing three standard
+   execution algorithms (TWAP, VWAP, POV) across hundreds of simulated market days.
+
+**No finance background needed** — every chart has a plain-language
+*"How to read this"* caption underneath, and every slider has a tooltip (hover
+over the small **?** icons) explaining what it controls and what realistic
+values look like.
+        """
+    )
+
 tab_research, tab_execution = st.tabs(
     ["📊  Signal Research & Backtest", "⚡  Execution Simulation"]
 )
@@ -52,7 +87,7 @@ with tab_execution:
 
 st.markdown(
     "<hr style='border-color:#1F2733'><p style='color:#8B949E; font-size:0.85rem;'>"
-    "Built by Octavio de Freitas · "
+    "Built by Octavio De Freitas · "
     "<a href='https://github.com/octaviodefreitas/multi-asset-research-lab' "
     "style='color:#00D4AA; text-decoration:none;'>GitHub</a> · "
     "Data: Yahoo Finance (daily, adjusted). Simulated research only — not investment advice.</p>",

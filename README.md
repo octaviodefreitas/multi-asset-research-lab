@@ -1,7 +1,7 @@
 # Multi-Asset Research & Execution Lab
 
 **Live demo: [octavio-quant-multi-asset-research.streamlit.app](https://octavio-quant-multi-asset-research.streamlit.app/)**
-*by Octavio de Freitas*
+*by Octavio De Freitas*
 
 An interactive research environment for systematic multi-asset trading and
 execution-quality analysis, built with Python, pandas and Streamlit.
