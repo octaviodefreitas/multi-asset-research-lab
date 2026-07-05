@@ -97,6 +97,19 @@ def vol_target(signal: pd.DataFrame, returns: pd.DataFrame, target_vol: float = 
     return signal * scale
 
 
+def regime_filter(signal: pd.DataFrame, benchmark_close: pd.Series,
+                  window: int = 200) -> pd.DataFrame:
+    """Gate a (noisy) signal with the benchmark's trend regime: long positions
+    are only allowed while the benchmark trades above its rolling MA (risk-on),
+    shorts only below it (risk-off). The classic market filter for single-name
+    strategies, where index trend is far more reliable than stock trend."""
+    ma = benchmark_close.rolling(window).mean()
+    risk_on = (benchmark_close > ma).astype(float).where(ma.notna())
+    longs = signal.clip(lower=0.0).mul(risk_on, axis=0)
+    shorts = signal.clip(upper=0.0).mul(1.0 - risk_on, axis=0)
+    return longs + shorts
+
+
 SIGNAL_TYPES = ("MA Crossover", "Time-Series Momentum", "Mean Reversion (Z-Score)",
                 "Ichimoku Cloud", "Combined")
 

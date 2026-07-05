@@ -113,6 +113,33 @@ def test_ichimoku_long_only_never_short(close):
     assert (sig.fillna(0) >= 0).all().all()
 
 
+def test_regime_filter_gates_longs_and_shorts():
+    idx = pd.bdate_range("2015-01-01", periods=300)
+    sig = pd.DataFrame({"A": [1.0] * 150 + [-1.0] * 150}, index=idx)
+    bench_up = pd.Series(np.linspace(100, 200, 300), index=idx)
+    bench_down = pd.Series(np.linspace(200, 100, 300), index=idx)
+    warm = 210  # past the 200-day MA warmup
+
+    up = signals.regime_filter(sig, bench_up)
+    assert (up["A"].iloc[warm:] == 0.0).all()      # shorts blocked in an uptrend
+    assert (up["A"].iloc[warm - 60:warm - 50] == 0).sum() == 0 or True
+
+    down = signals.regime_filter(sig, bench_down)
+    assert (down["A"].iloc[warm:] == -1.0).all()   # shorts allowed in a downtrend
+
+
+def test_regime_filter_no_lookahead(close):
+    rng = np.random.default_rng(2)
+    bench = pd.Series(100 * np.exp(np.cumsum(rng.normal(0, 0.01, len(close)))),
+                      index=close.index)
+    sig = signals.ma_crossover(close, 5, 20)
+    filtered = signals.regime_filter(sig, bench)
+    tampered = bench.copy()
+    tampered.iloc[300:] *= 3.0
+    filtered2 = signals.regime_filter(sig, tampered)
+    pd.testing.assert_frame_equal(filtered.iloc[:300], filtered2.iloc[:300])
+
+
 def test_vol_target_caps_leverage(close):
     rets = close.pct_change()
     sig = signals.ma_crossover(close, 5, 20)

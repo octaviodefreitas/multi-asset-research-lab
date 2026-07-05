@@ -64,6 +64,12 @@ def render() -> None:
             cost_bps = st.slider("Transaction cost (bps)", 0.0, 25.0, 5.0, 0.5, key="stock_cost",
                                  help="Single stocks trade with wider spreads than index ETFs — "
                                       "5–10 bps is realistic for large caps.")
+            regime_on = st.toggle("Benchmark regime filter (200-day MA)", key="stock_regime",
+                                  help="Only allow long positions while the benchmark index is "
+                                       "above its own 200-day moving average (and shorts only "
+                                       "below it). Single-stock signals are noisy; the index "
+                                       "trend is far more reliable — this gates the former "
+                                       "with the latter.")
 
         p1, p2, p3 = st.columns(3)
         params: dict = {}
@@ -111,6 +117,8 @@ def render() -> None:
     long_only = direction == "Long / Flat"
     close = panel[[ticker]]
     sig = signals.build_signal(close, signal_type, long_only=long_only, **params)
+    if regime_on:
+        sig = signals.regime_filter(sig, panel[bench])
     bt = backtest.run_backtest(close, sig, cost_bps)
 
     strat = bt.strategy_returns[ticker]
