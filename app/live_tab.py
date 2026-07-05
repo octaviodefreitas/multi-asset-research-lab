@@ -31,6 +31,10 @@ def render() -> None:
         f"strategy trading (on paper) through data that **did not exist when the parameters "
         f"were chosen** — the strongest possible answer to “isn't this curve-fit?”"
     )
+    signal_desc = config["signal_type"]
+    direction_desc = ("long/flat — downtrending assets go to cash, never short"
+                      if config["direction"] == "long_flat" else "long/short")
+
     with st.expander("How the track record is verifiable"):
         st.markdown(
             f"""
@@ -45,10 +49,17 @@ def render() -> None:
    the same numbers. Changing the parameters would show up in the file's
    [commit history]({REPO}/commits/main/live_config.json).
 
-**Frozen settings:** {config["signal_type"]} signal
+**Frozen settings:** {signal_desc} signal
 ({", ".join(f"{k}={v}" for k, v in config["params"].items())}),
-long/short, equal-weight across {len(config["universe"])} assets,
+**{direction_desc}**, equal-weight across {len(config["universe"])} assets,
 {config["cost_bps"]:.0f} bps transaction costs.
+
+**What "long/flat" means:** when an asset's signal turns positive the strategy
+owns it; when the signal turns negative the strategy sells and holds cash for
+that sleeve — it steps aside rather than betting on further falls ("shorting").
+Stocks and bonds drift upward over the long run because investors are paid a
+*risk premium* for holding them; shorting such assets means paying that premium
+away, so going to cash is the better-specified response to a downtrend.
             """
         )
 
