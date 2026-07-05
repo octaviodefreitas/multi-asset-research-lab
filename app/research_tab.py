@@ -163,6 +163,9 @@ def render() -> None:
     panel = get_panel(tuple(tickers), f"{start_year}-01-01")
     valid = panel.notna()
 
+    # Rendered here (top of page), filled at the end once results exist.
+    export_slot = st.container(border=True)
+
     # ------------------------------------------------------------- backtest
     sig = signals.build_signal(panel, signal_type, long_only=long_only,
                                vol_target_on=vol_target_on, target_vol=target_vol,
@@ -471,14 +474,6 @@ def render() -> None:
     )
 
     # ------------------------------------------------------------- export
-    st.markdown("#### Export for presentations")
-    st.markdown(
-        "One click packages the current configuration into deliverables: a **PowerPoint "
-        "tearsheet** whose charts are *native, editable PowerPoint objects* (recolor and "
-        "restyle them to any house template — they are not screenshots), and the full "
-        "metrics table as CSV for Excel. Individual charts can also be saved as images "
-        "via the camera icon in each chart's toolbar."
-    )
     fmt_table = table.copy()
     for col, fmt in METRIC_FORMATS.items():
         fmt_table[col] = fmt_table[col].map(
@@ -500,20 +495,27 @@ def render() -> None:
     if crisis_export is not None:
         export_tables.append(("Crisis playbook — strategy vs buy & hold", crisis_export))
 
-    e1, e2 = st.columns(2)
-    e1.download_button(
-        "Download PowerPoint tearsheet (.pptx)",
-        data=export.build_tearsheet(subtitle, charts, export_tables),
-        file_name="strategy_tearsheet.pptx",
-        mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    )
-    e2.download_button(
-        "Download metrics table (.csv)",
-        data=table.to_csv().encode(),
-        file_name="strategy_metrics.csv",
-        mime="text/csv",
-    )
-    st.caption(
-        "The deck reflects the parameters currently set above — change a slider and "
-        "download again for an updated version. A disclaimer slide is included automatically."
-    )
+    with export_slot:
+        label, b1, b2 = st.columns([2.4, 1.1, 1.0], vertical_alignment="center")
+        label.markdown(
+            "**Export this configuration** — a presentation-ready tearsheet "
+            "(charts are native, editable PowerPoint objects, disclaimer included) "
+            "or the raw metrics for Excel. Both reflect the sliders as currently set."
+        )
+        b1.download_button(
+            "⤓  PowerPoint tearsheet",
+            data=export.build_tearsheet(subtitle, charts, export_tables),
+            file_name="strategy_tearsheet.pptx",
+            mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            width="stretch",
+            help="Title slide, equity curve, drawdown, key metrics and crisis table — "
+                 "drag the slides straight into a pitch book.",
+        )
+        b2.download_button(
+            "⤓  Metrics (.csv)",
+            data=table.to_csv().encode(),
+            file_name="strategy_metrics.csv",
+            mime="text/csv",
+            width="stretch",
+            help="Per-asset and portfolio metrics table, for Excel.",
+        )
