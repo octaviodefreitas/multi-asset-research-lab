@@ -253,10 +253,11 @@ def render() -> None:
             "Strategy": (1 + port.loc[s:e]).prod() - 1,
             "Buy & Hold": (1 + bench.loc[s:e]).prod() - 1,
         })
-    crisis_export = None
+    crisis_export = crisis_num = None
     if crisis_rows:
         crisis = pd.DataFrame(crisis_rows)
         crisis["Difference"] = crisis["Strategy"] - crisis["Buy & Hold"]
+        crisis_num = crisis.set_index("Episode")
         crisis_export = crisis.copy()
         for col in ("Strategy", "Buy & Hold", "Difference"):
             crisis_export[col] = crisis_export[col].map("{:+.1%}".format)
@@ -483,24 +484,36 @@ def render() -> None:
                 + f" | {direction} | {cost_bps:.0f} bps costs | "
                 + f"{len(tickers)} assets | {panel.index[0]:%Y}–{panel.index[-1]:%Y}"
                 + " | Octavio De Freitas")
-    weekly = lambda s: s.resample("W").last().dropna()
+    monthly_ds = lambda s: s.resample("ME").last().dropna()
     charts = [
         ("Growth of $1 (net of costs)",
-         {"Strategy — EW Portfolio": weekly(port_eq), "Buy & Hold (EW)": weekly(bench_eq)}),
-        ("Drawdown (% below previous peak)",
-         {"Strategy": weekly(metrics.drawdown_series(port) * 100),
-          "Buy & Hold": weekly(metrics.drawdown_series(bench) * 100)}),
+         {"Strategy — EW Portfolio": monthly_ds(port_eq), "Buy & Hold (EW)": monthly_ds(bench_eq)},
+         "0.00"),
+        ("Drawdown — % below previous peak",
+         {"Strategy": monthly_ds(metrics.drawdown_series(port)),
+          "Buy & Hold": monthly_ds(metrics.drawdown_series(bench))},
+         "0%"),
     ]
     export_tables = [("Key metrics (net of costs)", fmt_table)]
     if crisis_export is not None:
         export_tables.append(("Crisis playbook — strategy vs buy & hold", crisis_export))
+
+    workbook_sheets = {
+        "Key Metrics": table,
+        "Equity Curves": pd.DataFrame({"Strategy (growth of $1)": port_eq,
+                                       "Buy & Hold (growth of $1)": bench_eq}),
+        "Daily Returns": pd.DataFrame({"Strategy": port, "Buy & Hold": bench}),
+        "Monthly Returns": pivot,
+    }
+    if crisis_num is not None:
+        workbook_sheets["Crisis Playbook"] = crisis_num
 
     with export_slot:
         label, b1, b2 = st.columns([2.4, 1.1, 1.0], vertical_alignment="center")
         label.markdown(
             "**Export this configuration** — a presentation-ready tearsheet "
             "(charts are native, editable PowerPoint objects, disclaimer included) "
-            "or the raw metrics for Excel. Both reflect the sliders as currently set."
+            "or a full Excel workbook. Both reflect the sliders as currently set."
         )
         b1.download_button(
             "⤓  PowerPoint tearsheet",
@@ -512,10 +525,12 @@ def render() -> None:
                  "drag the slides straight into a pitch book.",
         )
         b2.download_button(
-            "⤓  Metrics (.csv)",
-            data=table.to_csv().encode(),
-            file_name="strategy_metrics.csv",
-            mime="text/csv",
+            "⤓  Excel workbook",
+            data=export.build_workbook(workbook_sheets),
+            file_name="strategy_workbook.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             width="stretch",
-            help="Per-asset and portfolio metrics table, for Excel.",
+            help="One sheet each: key metrics, equity curves, daily returns, "
+                 "monthly returns and the crisis playbook — everything needed to "
+                 "rebuild any chart in Excel.",
         )
