@@ -195,6 +195,14 @@ def render() -> None:
     port = backtest.equal_weight_returns(bt.strategy_returns, valid)
     bench = backtest.equal_weight_returns(bt.asset_returns.where(valid), valid)
 
+    # Industry-standard reference portfolio: 60/40 equities/bonds, starting
+    # once both legs have data.
+    bench_6040 = None
+    if "SPY" in panel.columns and "AGG" in panel.columns:
+        both = valid["SPY"] & valid["AGG"]
+        bench_6040 = (0.6 * bt.asset_returns["SPY"]
+                      + 0.4 * bt.asset_returns["AGG"]).where(both, 0.0)
+
     port_stats = metrics.summary(port, positions=bt.positions.abs().sum(axis=1),
                                  turnover=bt.turnover.sum(axis=1) / max(len(tickers), 1))
 
@@ -222,8 +230,12 @@ def render() -> None:
                                  line=dict(width=1.1, color=ASSET_COLORS.get(t)), opacity=0.55))
     port_eq = metrics.equity_curve(port)
     bench_eq = metrics.equity_curve(bench)
-    fig.add_trace(go.Scatter(x=bench_eq.index, y=bench_eq, name="Buy & Hold (EW)",
+    fig.add_trace(go.Scatter(x=bench_eq.index, y=bench_eq, name="Passive EW (rebalanced)",
                              line=dict(width=1.6, color=GREY, dash="dash")))
+    if bench_6040 is not None:
+        eq_6040 = metrics.equity_curve(bench_6040)
+        fig.add_trace(go.Scatter(x=eq_6040.index, y=eq_6040, name="60/40 (SPY/AGG)",
+                                 line=dict(width=1.6, color="#C9A227", dash="dot")))
     fig.add_trace(go.Scatter(x=port_eq.index, y=port_eq, name="Strategy — EW Portfolio",
                              line=dict(width=2.8, color=PRIMARY)))
     style_fig(fig, "Equity curves — growth of $1 (net of costs)", height=540,
@@ -238,15 +250,18 @@ def render() -> None:
     st.plotly_chart(fig, width="stretch")
     st.caption(
         "**How to read this:** thin lines are the signal applied to each asset on its own; "
-        "the bold teal line is the equal-weight portfolio of all of them, and the grey dashed "
-        "line is simply holding the same assets with no signal. The gap between teal and grey "
-        "is what the signal (and diversification across uncorrelated trends) adds."
+        "the bold teal line is the equal-weight portfolio of all of them. Two benchmarks: "
+        "the grey dashed line holds the same assets passively (equal weight, rebalanced — "
+        "the 'no skill, same universe' test), and the gold dotted line is the classic 60/40 "
+        "equity/bond portfolio — the reference every allocator measures against. Beating "
+        "the first shows the signal adds value; beating the second shows the whole approach "
+        "earns its place."
     )
 
     dd_fig = go.Figure()
     dd_fig.add_trace(go.Scatter(x=port.index, y=metrics.drawdown_series(port), name="Strategy",
                                 fill="tozeroy", line=dict(color=PRIMARY, width=1.5)))
-    dd_fig.add_trace(go.Scatter(x=bench.index, y=metrics.drawdown_series(bench), name="Buy & Hold",
+    dd_fig.add_trace(go.Scatter(x=bench.index, y=metrics.drawdown_series(bench), name="Passive EW",
                                 line=dict(color=RED, width=1.2, dash="dot")))
     for _, short_name, ev_start, ev_end in EVENTS:
         s = max(pd.Timestamp(ev_start), port.index[0])
@@ -277,20 +292,20 @@ def render() -> None:
             "Episode": full_name,
             "Period": f"{s:%b %Y} – {e:%b %Y}",
             "Strategy": (1 + port.loc[s:e]).prod() - 1,
-            "Buy & Hold": (1 + bench.loc[s:e]).prod() - 1,
+            "Passive EW": (1 + bench.loc[s:e]).prod() - 1,
         })
     crisis_export = crisis_num = None
     if crisis_rows:
         crisis = pd.DataFrame(crisis_rows)
-        crisis["Difference"] = crisis["Strategy"] - crisis["Buy & Hold"]
+        crisis["Difference"] = crisis["Strategy"] - crisis["Passive EW"]
         crisis_num = crisis.set_index("Episode")
         crisis_export = crisis.copy()
-        for col in ("Strategy", "Buy & Hold", "Difference"):
+        for col in ("Strategy", "Passive EW", "Difference"):
             crisis_export[col] = crisis_export[col].map("{:+.1%}".format)
         crisis_export = crisis_export.set_index("Episode")
         st.markdown("##### Crisis playbook — the same episodes, in numbers")
         st.dataframe(
-            crisis.style.format({"Strategy": "{:+.1%}", "Buy & Hold": "{:+.1%}",
+            crisis.style.format({"Strategy": "{:+.1%}", "Passive EW": "{:+.1%}",
                                  "Difference": "{:+.1%}"}),
             width="stretch", hide_index=True,
         )
@@ -340,7 +355,7 @@ def render() -> None:
         roll_strat = port.rolling(window).mean() / port.rolling(window).std(ddof=1) * np.sqrt(window)
         roll_bench = bench.rolling(window).mean() / bench.rolling(window).std(ddof=1) * np.sqrt(window)
         rs = go.Figure()
-        rs.add_trace(go.Scatter(x=roll_bench.index, y=roll_bench, name="Buy & Hold",
+        rs.add_trace(go.Scatter(x=roll_bench.index, y=roll_bench, name="Passive EW",
                                 line=dict(color=GREY, width=1.2, dash="dot")))
         rs.add_trace(go.Scatter(x=roll_strat.index, y=roll_strat, name="Strategy",
                                 line=dict(color=PRIMARY, width=2.0)))
@@ -361,7 +376,9 @@ def render() -> None:
         rows[UNIVERSE.get(t, t)] = metrics.summary(
             bt.strategy_returns[t], positions=bt.positions[t], turnover=bt.turnover[t])
     rows["EW Portfolio"] = port_stats
-    rows["Buy & Hold (EW)"] = metrics.summary(bench)
+    rows["Passive EW (rebalanced)"] = metrics.summary(bench)
+    if bench_6040 is not None:
+        rows["60/40 (SPY/AGG)"] = metrics.summary(bench_6040)
     table = pd.DataFrame(rows).T
     st.dataframe(
         table.style.format({k: v for k, v in METRIC_FORMATS.items()})
@@ -514,11 +531,11 @@ def render() -> None:
     monthly_ds = lambda s: s.resample("ME").last().dropna()
     charts = [
         ("Growth of $1 (net of costs)",
-         {"Strategy — EW Portfolio": monthly_ds(port_eq), "Buy & Hold (EW)": monthly_ds(bench_eq)},
+         {"Strategy — EW Portfolio": monthly_ds(port_eq), "Passive EW (rebalanced)": monthly_ds(bench_eq)},
          "0.00"),
         ("Drawdown — % below previous peak",
          {"Strategy": monthly_ds(metrics.drawdown_series(port)),
-          "Buy & Hold": monthly_ds(metrics.drawdown_series(bench))},
+          "Passive EW": monthly_ds(metrics.drawdown_series(bench))},
          "0%"),
     ]
     export_tables = [("Key metrics (net of costs)", fmt_table)]
@@ -528,8 +545,8 @@ def render() -> None:
     workbook_sheets = {
         "Key Metrics": table,
         "Equity Curves": pd.DataFrame({"Strategy (growth of $1)": port_eq,
-                                       "Buy & Hold (growth of $1)": bench_eq}),
-        "Daily Returns": pd.DataFrame({"Strategy": port, "Buy & Hold": bench}),
+                                       "Passive EW (growth of $1)": bench_eq}),
+        "Daily Returns": pd.DataFrame({"Strategy": port, "Passive EW": bench}),
         "Monthly Returns": pivot,
     }
     if crisis_num is not None:
