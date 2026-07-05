@@ -230,11 +230,12 @@ def render() -> None:
                               help="Log scale shows compounding fairly — equal vertical distances are equal % moves.")
     with tg2:
         vol_match = st.toggle(
-            "Compare at equal risk (vol-matched)",
+            "Compare at equal risk (vol-matched)", value=True,
             help="A growth-of-$1 chart rewards whoever took the most risk. This scales the "
                  "strategy (with modest leverage, as institutions run such strategies) to the "
                  "benchmark's volatility, so the lines compare return earned *per unit of "
-                 "risk*. Scaling never changes the Sharpe ratio — only the lens.",
+                 "risk* — the comparison professionals make. Turn off to see the raw, "
+                 "unlevered strategy, which runs at roughly half the benchmarks' volatility.",
         )
 
     port_eq = metrics.equity_curve(port)
