@@ -6,6 +6,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from app import export
 from app.theme import ASSET_COLORS, GREY, PRIMARY, RED, style_fig
 from data.loader import UNIVERSE, load_universe
 from engine import backtest, metrics, signals
@@ -249,9 +250,14 @@ def render() -> None:
             "Strategy": (1 + port.loc[s:e]).prod() - 1,
             "Buy & Hold": (1 + bench.loc[s:e]).prod() - 1,
         })
+    crisis_export = None
     if crisis_rows:
         crisis = pd.DataFrame(crisis_rows)
         crisis["Difference"] = crisis["Strategy"] - crisis["Buy & Hold"]
+        crisis_export = crisis.copy()
+        for col in ("Strategy", "Buy & Hold", "Difference"):
+            crisis_export[col] = crisis_export[col].map("{:+.1%}".format)
+        crisis_export = crisis_export.set_index("Episode")
         st.markdown("##### Crisis playbook — the same episodes, in numbers")
         st.dataframe(
             crisis.style.format({"Strategy": "{:+.1%}", "Buy & Hold": "{:+.1%}",
@@ -462,4 +468,52 @@ def render() -> None:
         "**How to read this:** in each row, the parameters were picked using only data *before* "
         "the test period. An out-of-sample Sharpe well below the in-sample one is the signature "
         "of overfitting; roughly comparable values suggest the signal captures something real."
+    )
+
+    # ------------------------------------------------------------- export
+    st.markdown("#### Export for presentations")
+    st.markdown(
+        "One click packages the current configuration into deliverables: a **PowerPoint "
+        "tearsheet** whose charts are *native, editable PowerPoint objects* (recolor and "
+        "restyle them to any house template — they are not screenshots), and the full "
+        "metrics table as CSV for Excel. Individual charts can also be saved as images "
+        "via the camera icon in each chart's toolbar."
+    )
+    fmt_table = table.copy()
+    for col, fmt in METRIC_FORMATS.items():
+        fmt_table[col] = fmt_table[col].map(
+            lambda v, f=fmt: "—" if pd.isna(v) else f.format(v))
+
+    subtitle = (f"{signal_type} — " + ", ".join(f"{k}={v}" for k, v in params.items())
+                + f" | {direction} | {cost_bps:.0f} bps costs | "
+                + f"{len(tickers)} assets | {panel.index[0]:%Y}–{panel.index[-1]:%Y}"
+                + " | Octavio De Freitas")
+    weekly = lambda s: s.resample("W").last().dropna()
+    charts = [
+        ("Growth of $1 (net of costs)",
+         {"Strategy — EW Portfolio": weekly(port_eq), "Buy & Hold (EW)": weekly(bench_eq)}),
+        ("Drawdown (% below previous peak)",
+         {"Strategy": weekly(metrics.drawdown_series(port) * 100),
+          "Buy & Hold": weekly(metrics.drawdown_series(bench) * 100)}),
+    ]
+    export_tables = [("Key metrics (net of costs)", fmt_table)]
+    if crisis_export is not None:
+        export_tables.append(("Crisis playbook — strategy vs buy & hold", crisis_export))
+
+    e1, e2 = st.columns(2)
+    e1.download_button(
+        "Download PowerPoint tearsheet (.pptx)",
+        data=export.build_tearsheet(subtitle, charts, export_tables),
+        file_name="strategy_tearsheet.pptx",
+        mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    )
+    e2.download_button(
+        "Download metrics table (.csv)",
+        data=table.to_csv().encode(),
+        file_name="strategy_metrics.csv",
+        mime="text/csv",
+    )
+    st.caption(
+        "The deck reflects the parameters currently set above — change a slider and "
+        "download again for an updated version. A disclaimer slide is included automatically."
     )
