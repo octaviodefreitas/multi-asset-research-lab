@@ -223,8 +223,13 @@ def render() -> None:
                              line=dict(width=1.6, color=GREY, dash="dash")))
     fig.add_trace(go.Scatter(x=port_eq.index, y=port_eq, name="Strategy — EW Portfolio",
                              line=dict(width=2.8, color=PRIMARY)))
-    style_fig(fig, "Equity curves — growth of $1 (net of costs)", height=480,
+    style_fig(fig, "Equity curves — growth of $1 (net of costs)", height=540,
               y_title="Growth of $1")
+    # 12+ legend entries wrap over the title when placed on top; park them below.
+    fig.update_layout(
+        legend=dict(orientation="h", yanchor="top", y=-0.08, xanchor="left", x=0),
+        margin=dict(b=120),
+    )
     if log_scale:
         fig.update_yaxes(type="log")
     st.plotly_chart(fig, width="stretch")
