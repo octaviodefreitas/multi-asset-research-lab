@@ -198,13 +198,21 @@ def render() -> None:
     port = backtest.equal_weight_returns(bt.strategy_returns, valid)
     bench = backtest.equal_weight_returns(bt.asset_returns.where(valid), valid)
 
-    # Industry-standard reference portfolio: 60/40 equities/bonds, starting
-    # once both legs have data.
+    # Industry-standard reference portfolio: 60/40 equities/bonds. AGG only
+    # launched in 2003; before that the bond leg is extended with VBMFX
+    # (Vanguard Total Bond, same index, history to the 1980s) so the benchmark
+    # covers the full sample including the dot-com bear.
     bench_6040 = None
     if "SPY" in panel.columns and "AGG" in panel.columns:
-        both = valid["SPY"] & valid["AGG"]
+        bond = bt.asset_returns["AGG"].where(valid["AGG"])
+        try:
+            vbmfx = (load_prices("VBMFX", f"{start_year}-01-01")["Close"]
+                     .reindex(panel.index).ffill(limit=5).pct_change())
+            bond = bond.fillna(vbmfx)
+        except Exception:
+            pass
         bench_6040 = (0.6 * bt.asset_returns["SPY"]
-                      + 0.4 * bt.asset_returns["AGG"]).where(both, 0.0)
+                      + 0.4 * bond.fillna(0.0)).where(valid["SPY"], 0.0)
 
     port_stats = metrics.summary(port, positions=bt.positions.abs().sum(axis=1),
                                  turnover=bt.turnover.sum(axis=1) / max(len(tickers), 1))
@@ -435,12 +443,13 @@ def render() -> None:
     ybar_colors = {strat_label: PRIMARY, "Passive EW": GREY, "60/40": "#C9A227"}
     ybar = go.Figure()
     for col in yearly.columns:
-        ybar.add_trace(go.Bar(x=yearly.index, y=yearly[col], name=col,
-                              marker_color=ybar_colors[col]))
-    ybar.add_hline(y=0, line_color="#2C3644")
-    style_fig(ybar, None, height=340, y_title="Return")
-    ybar.update_yaxes(tickformat="+.0%")
-    ybar.update_layout(barmode="group")
+        ybar.add_trace(go.Bar(
+            x=yearly.index.astype(str), y=yearly[col], name=col,
+            marker_color=ybar_colors[col],
+            hovertemplate="%{x} — " + col + ": %{y:.1%}<extra></extra>"))
+    style_fig(ybar, "Total return by calendar year", height=360, y_title="Return")
+    ybar.update_yaxes(tickformat=".0%", zeroline=True, zerolinecolor="#2C3644")
+    ybar.update_layout(barmode="group", hovermode="closest")
     st.plotly_chart(ybar, width="stretch")
     st.caption(
         "**How to read this:** each year's total return, side by side"
