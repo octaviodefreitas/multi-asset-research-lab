@@ -224,39 +224,56 @@ def render() -> None:
     log_scale = st.toggle("Log scale", value=True,
                           help="Log scale shows compounding fairly — equal vertical distances are equal % moves.")
 
-    fig = go.Figure()
-    for t in tickers:
-        fig.add_trace(go.Scatter(x=bt.equity.index, y=bt.equity[t], name=UNIVERSE.get(t, t),
-                                 line=dict(width=1.1, color=ASSET_COLORS.get(t)), opacity=0.55))
     port_eq = metrics.equity_curve(port)
     bench_eq = metrics.equity_curve(bench)
+
+    fig = go.Figure()
     fig.add_trace(go.Scatter(x=bench_eq.index, y=bench_eq, name="Passive EW (rebalanced)",
-                             line=dict(width=1.6, color=GREY, dash="dash")))
+                             line=dict(width=1.7, color=GREY, dash="dash")))
     if bench_6040 is not None:
         eq_6040 = metrics.equity_curve(bench_6040)
         fig.add_trace(go.Scatter(x=eq_6040.index, y=eq_6040, name="60/40 (SPY/AGG)",
-                                 line=dict(width=1.6, color="#C9A227", dash="dot")))
+                                 line=dict(width=1.7, color="#C9A227", dash="dot")))
     fig.add_trace(go.Scatter(x=port_eq.index, y=port_eq, name="Strategy — EW Portfolio",
                              line=dict(width=2.8, color=PRIMARY)))
-    style_fig(fig, "Equity curves — growth of $1 (net of costs)", height=540,
+    style_fig(fig, "Strategy vs benchmarks — growth of $1 (net of costs)", height=460,
               y_title="Growth of $1")
-    # 12+ legend entries wrap over the title when placed on top; park them below.
-    fig.update_layout(
-        legend=dict(orientation="h", yanchor="top", y=-0.08, xanchor="left", x=0),
-        margin=dict(b=120),
-    )
     if log_scale:
         fig.update_yaxes(type="log")
     st.plotly_chart(fig, width="stretch")
     st.caption(
-        "**How to read this:** thin lines are the signal applied to each asset on its own; "
-        "the bold teal line is the equal-weight portfolio of all of them. Two benchmarks: "
-        "the grey dashed line holds the same assets passively (equal weight, rebalanced — "
-        "the 'no skill, same universe' test), and the gold dotted line is the classic 60/40 "
-        "equity/bond portfolio — the reference every allocator measures against. Beating "
-        "the first shows the signal adds value; beating the second shows the whole approach "
-        "earns its place."
+        "**How to read this:** three portfolios, same starting dollar. The teal line is the "
+        "strategy. The grey dashed line — **Passive EW** — holds the *same* assets at equal "
+        "weight but ignores every signal: the strategy's 'no-skill twin'. Beating it proves "
+        "the signal adds value. The gold dotted line is the classic **60/40** stock/bond "
+        "portfolio, the reference every allocator measures against. Beating that proves the "
+        "whole approach earns a place in a portfolio."
     )
+
+    with st.expander("Per-asset detail — the signal applied to each asset individually"):
+        pfig = go.Figure()
+        for t in tickers:
+            pfig.add_trace(go.Scatter(x=bt.equity.index, y=bt.equity[t],
+                                      name=UNIVERSE.get(t, t),
+                                      line=dict(width=1.1, color=ASSET_COLORS.get(t)),
+                                      opacity=0.6))
+        pfig.add_trace(go.Scatter(x=port_eq.index, y=port_eq, name="Strategy — EW Portfolio",
+                                  line=dict(width=2.6, color=PRIMARY)))
+        style_fig(pfig, "Per-asset equity curves — growth of $1", height=520,
+                  y_title="Growth of $1")
+        pfig.update_layout(
+            legend=dict(orientation="h", yanchor="top", y=-0.08, xanchor="left", x=0),
+            margin=dict(b=120),
+        )
+        if log_scale:
+            pfig.update_yaxes(type="log")
+        st.plotly_chart(pfig, width="stretch")
+        st.caption(
+            "**How to read this:** each thin line is the strategy trading one asset on its "
+            "own; the teal line is the equal-weight combination of all of them. Notice how "
+            "much smoother the combination is than almost any single line — that is "
+            "diversification across independent trends at work."
+        )
 
     dd_fig = go.Figure()
     dd_fig.add_trace(go.Scatter(x=port.index, y=metrics.drawdown_series(port), name="Strategy",
