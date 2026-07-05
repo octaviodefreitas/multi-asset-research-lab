@@ -423,23 +423,36 @@ def render() -> None:
 
     # ------------------------------------------------------------- calendar years
     st.markdown("##### Calendar-year returns")
+    y_port = port * scale if vol_match else port
+    strat_label = (f"Strategy (×{scale:.1f} vol-matched)" if vol_match
+                   else "Strategy (unlevered)")
     yearly = pd.DataFrame({
-        "Strategy": (1 + port).groupby(port.index.year).prod() - 1,
+        strat_label: (1 + y_port).groupby(y_port.index.year).prod() - 1,
         "Passive EW": (1 + bench).groupby(bench.index.year).prod() - 1,
     })
     if bench_6040 is not None:
         yearly["60/40"] = (1 + bench_6040).groupby(bench_6040.index.year).prod() - 1
-    yearly.index.name = "Year"
-    st.dataframe(
-        yearly.style.format("{:+.1%}")
-        .background_gradient(cmap="RdYlGn", vmin=-0.25, vmax=0.25),
-        width="stretch", height=320,
-    )
+    ybar_colors = {strat_label: PRIMARY, "Passive EW": GREY, "60/40": "#C9A227"}
+    ybar = go.Figure()
+    for col in yearly.columns:
+        ybar.add_trace(go.Bar(x=yearly.index, y=yearly[col], name=col,
+                              marker_color=ybar_colors[col]))
+    ybar.add_hline(y=0, line_color="#2C3644")
+    style_fig(ybar, None, height=340, y_title="Return")
+    ybar.update_yaxes(tickformat="+.0%")
+    ybar.update_layout(barmode="group")
+    st.plotly_chart(ybar, width="stretch")
     st.caption(
-        "**How to read this:** each calendar year's total return, strategy vs both "
-        "benchmarks (the strategy shown raw, unlevered — roughly half the benchmarks' "
-        "risk, so compare the *bad* years above all: 2008 and 2022 are where the "
-        "strategy earns its keep). Scroll inside the table for all years."
+        "**How to read this:** each year's total return, side by side"
+        + (" at equal risk (the strategy follows the vol-matched toggle above)"
+           if vol_match else
+           " — note the strategy is shown unlevered here, at roughly half the "
+           "benchmarks' risk")
+        + ". The years that matter most are the red ones: 2008 and 2022 are where "
+        "the benchmarks crater and the strategy stands apart. In roaring bull years "
+        "the benchmarks win — that is the insurance premium trend-following pays "
+        "in good times for protection in bad ones. No strategy wins every year; "
+        "the question is *which* years it wins."
     )
 
     # ------------------------------------------------------------- per-asset table
