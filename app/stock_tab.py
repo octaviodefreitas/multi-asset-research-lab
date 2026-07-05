@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from app.research_tab import EVENTS
 from app.theme import ACCENT, GREY, PRIMARY, RED, style_fig
 from data.loader import load_universe
 from engine import backtest, metrics, signals
@@ -224,3 +225,55 @@ def render() -> None:
         "the signal genuinely works on this name, **positive alpha with an information "
         "ratio the stock alone can't match**."
     )
+
+    # ------------------------------------------------------------- calendar years
+    st.markdown("##### Calendar-year returns")
+    strat_name = f"Strategy on {ticker}"
+    yearly = pd.DataFrame({
+        strat_name: (1 + strat).groupby(strat.index.year).prod() - 1,
+        f"{ticker} Buy & Hold": (1 + stock_bh).groupby(stock_bh.index.year).prod() - 1,
+        f"{bench} Buy & Hold": (1 + bench_bh).groupby(bench_bh.index.year).prod() - 1,
+    })
+    ycolors = [PRIMARY, ACCENT, GREY]
+    ybar = go.Figure()
+    for col, color in zip(yearly.columns, ycolors):
+        ybar.add_trace(go.Bar(
+            x=yearly.index.astype(str), y=yearly[col], name=col, marker_color=color,
+            hovertemplate="%{x}, " + col + ": %{y:.1%}<extra></extra>"))
+    style_fig(ybar, "Total return by calendar year", height=360, y_title="Return")
+    ybar.update_yaxes(tickformat=".0%", zeroline=True, zerolinecolor="#2C3644")
+    ybar.update_layout(barmode="group", hovermode="closest")
+    st.plotly_chart(ybar, width="stretch")
+    st.caption(
+        "**How to read this:** year by year, timing the stock vs simply holding it (and "
+        "the index for context). Timing rarely wins the roaring bull years; look instead "
+        "at the deep red ones. Those are the years that actually shake investors out of "
+        "positions, and where cutting exposure pays."
+    )
+
+    # ------------------------------------------------------------- crisis table
+    crisis_rows = []
+    for full_name, _, ev_start, ev_end in EVENTS:
+        s, e = pd.Timestamp(ev_start), pd.Timestamp(ev_end)
+        if s < strat.index[0] or e > strat.index[-1]:
+            continue
+        crisis_rows.append({
+            "Episode": full_name,
+            "Period": f"{s:%b %Y} - {e:%b %Y}",
+            strat_name: (1 + strat.loc[s:e]).prod() - 1,
+            f"{ticker} Buy & Hold": (1 + stock_bh.loc[s:e]).prod() - 1,
+            f"{bench} Buy & Hold": (1 + bench_bh.loc[s:e]).prod() - 1,
+        })
+    if crisis_rows:
+        st.markdown("##### Crisis playbook: the same episodes in numbers")
+        crisis = pd.DataFrame(crisis_rows)
+        pct_cols = [strat_name, f"{ticker} Buy & Hold", f"{bench} Buy & Hold"]
+        st.dataframe(crisis.style.format({c: "{:+.1%}" for c in pct_cols}),
+                     width="stretch", hide_index=True)
+        st.caption(
+            "**How to read this:** how the timed stock, the held stock and the index each "
+            "fared through famous stress episodes. Single names can halve in a crisis; "
+            "a timing rule that steps aside in even one or two of these episodes can "
+            "justify all the bull-market upside it gives up. Turn the benchmark regime "
+            "filter on and off to see its effect right here."
+        )
