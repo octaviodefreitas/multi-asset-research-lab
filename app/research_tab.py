@@ -421,6 +421,27 @@ def render() -> None:
             "below zero show how long an investor would have had to sit through losses."
         )
 
+    # ------------------------------------------------------------- calendar years
+    st.markdown("##### Calendar-year returns")
+    yearly = pd.DataFrame({
+        "Strategy": (1 + port).groupby(port.index.year).prod() - 1,
+        "Passive EW": (1 + bench).groupby(bench.index.year).prod() - 1,
+    })
+    if bench_6040 is not None:
+        yearly["60/40"] = (1 + bench_6040).groupby(bench_6040.index.year).prod() - 1
+    yearly.index.name = "Year"
+    st.dataframe(
+        yearly.style.format("{:+.1%}")
+        .background_gradient(cmap="RdYlGn", vmin=-0.25, vmax=0.25),
+        width="stretch", height=320,
+    )
+    st.caption(
+        "**How to read this:** each calendar year's total return, strategy vs both "
+        "benchmarks (the strategy shown raw, unlevered — roughly half the benchmarks' "
+        "risk, so compare the *bad* years above all: 2008 and 2022 are where the "
+        "strategy earns its keep). Scroll inside the table for all years."
+    )
+
     # ------------------------------------------------------------- per-asset table
     st.markdown("#### Per-asset breakdown (net of costs)")
     rows = {}
