@@ -13,21 +13,25 @@ def _series(n=100):
 
 
 def test_tearsheet_is_valid_pptx_with_expected_slides():
-    charts = [("Equity", {"Strategy": _series(), "Benchmark": _series() * 0.9}, "0.00")]
+    yearly = pd.Series([0.05, -0.12, 0.20], index=[2020, 2021, 2022])
+    charts = [
+        ("Equity", {"Strategy": _series(), "Benchmark": _series() * 0.9}, "0.00", "line"),
+        ("Yearly", {"Strategy": yearly}, "0%", "bar"),
+    ]
     tables = [("Metrics", pd.DataFrame({"Sharpe": ["1.10"], "CAGR": ["8.0%"]},
                                        index=["EW Portfolio"]))]
     blob = export.build_tearsheet("test subtitle", charts, tables)
 
     assert blob[:2] == b"PK"  # pptx is a zip container
     prs = Presentation(BytesIO(blob))
-    assert len(prs.slides) == 3  # title + 1 chart + 1 table
+    assert len(prs.slides) == 4  # title + 2 charts + 1 table
     assert round(prs.slide_width / prs.slide_height, 2) == round(16 / 9, 2)  # widescreen
 
 
 def test_tearsheet_handles_nans_in_series():
     s = _series()
     s.iloc[10:20] = np.nan
-    blob = export.build_tearsheet("sub", [("Equity", {"Strategy": s}, "0.00")], [])
+    blob = export.build_tearsheet("sub", [("Equity", {"Strategy": s}, "0.00", "line")], [])
     assert blob[:2] == b"PK"
 
 

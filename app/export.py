@@ -41,21 +41,26 @@ def _title_slide(prs: Presentation, title: str, subtitle: str) -> None:
         para.font.size = Pt(14)
 
 
-def _line_chart_slide(prs: Presentation, title: str, series: dict[str, pd.Series],
-                      number_format: str = "0.00") -> None:
+def _chart_slide(prs: Presentation, title: str, series: dict[str, pd.Series],
+                 number_format: str = "0.00", kind: str = "line") -> None:
     slide = prs.slides.add_slide(prs.slide_layouts[5])  # title-only layout
     slide.shapes.title.text = title
     slide.shapes.title.text_frame.paragraphs[0].font.size = Pt(24)
 
     data = CategoryChartData()
     first = next(iter(series.values()))
-    data.categories = _sparse_year_labels(first.index)
+    if kind == "bar":
+        data.categories = [str(i) for i in first.index]
+        chart_type = XL_CHART_TYPE.COLUMN_CLUSTERED
+    else:
+        data.categories = _sparse_year_labels(first.index)
+        chart_type = XL_CHART_TYPE.LINE
     for name, s in series.items():
         data.add_series(name, tuple(None if pd.isna(v) else round(float(v), 5)
                                     for v in s.to_numpy()))
 
     chart = slide.shapes.add_chart(
-        XL_CHART_TYPE.LINE, Inches(0.45), Inches(1.35), Inches(12.4), Inches(5.7), data
+        chart_type, Inches(0.45), Inches(1.35), Inches(12.4), Inches(5.7), data
     ).chart
     chart.has_title = False
     chart.font.size = Pt(11)
@@ -64,9 +69,10 @@ def _line_chart_slide(prs: Presentation, title: str, series: dict[str, pd.Series
     chart.legend.include_in_layout = False
     chart.value_axis.tick_labels.number_format = number_format
     chart.value_axis.tick_labels.number_format_is_linked = False
-    for ser in chart.series:
-        ser.smooth = True
-        ser.format.line.width = Pt(1.75)
+    if kind == "line":
+        for ser in chart.series:
+            ser.smooth = True
+            ser.format.line.width = Pt(1.75)
 
 
 def _table_slide(prs: Presentation, title: str, df: pd.DataFrame) -> None:
@@ -92,16 +98,16 @@ def _table_slide(prs: Presentation, title: str, df: pd.DataFrame) -> None:
 
 
 def build_tearsheet(subtitle: str,
-                    charts: list[tuple[str, dict[str, pd.Series], str]],
+                    charts: list[tuple[str, dict[str, pd.Series], str, str]],
                     tables: list[tuple[str, pd.DataFrame]]) -> bytes:
     """Assemble a 16:9 deck: title slide, one slide per chart (native,
-    editable), one slide per formatted table. Returns the .pptx as bytes."""
+    editable; kind "line" or "bar"), one slide per formatted table."""
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
     _title_slide(prs, "Multi-Asset Systematic Strategy — Tearsheet", subtitle)
-    for title, series, number_format in charts:
-        _line_chart_slide(prs, title, series, number_format)
+    for title, series, number_format, kind in charts:
+        _chart_slide(prs, title, series, number_format, kind)
     for title, df in tables:
         _table_slide(prs, title, df)
     buf = BytesIO()

@@ -624,25 +624,35 @@ def render() -> None:
                 + f"{len(tickers)} assets | {panel.index[0]:%Y}–{panel.index[-1]:%Y}"
                 + " | Octavio De Freitas")
     monthly_ds = lambda s: s.resample("ME").last().dropna()
+    eq_export = {"Strategy — EW Portfolio": monthly_ds(port_eq),
+                 "Passive EW (rebalanced)": monthly_ds(bench_eq)}
+    if bench_6040 is not None:
+        eq_export["60/40 (SPY/AGG)"] = monthly_ds(metrics.equity_curve(bench_6040))
     charts = [
-        ("Growth of $1 (net of costs)",
-         {"Strategy — EW Portfolio": monthly_ds(port_eq), "Passive EW (rebalanced)": monthly_ds(bench_eq)},
-         "0.00"),
+        ("Growth of $1 (net of costs)", eq_export, "0.00", "line"),
         ("Drawdown — % below previous peak",
          {"Strategy": monthly_ds(metrics.drawdown_series(port)),
           "Passive EW": monthly_ds(metrics.drawdown_series(bench))},
-         "0%"),
+         "0%", "line"),
+        ("Calendar-year returns",
+         {col: yearly[col] for col in yearly.columns}, "0%", "bar"),
     ]
     export_tables = [("Key metrics (net of costs)", fmt_table)]
     if crisis_export is not None:
         export_tables.append(("Crisis playbook — strategy vs buy & hold", crisis_export))
 
+    eq_sheet = {"Strategy (growth of $1)": port_eq,
+                "Passive EW (growth of $1)": bench_eq}
+    ret_sheet = {"Strategy": port, "Passive EW": bench}
+    if bench_6040 is not None:
+        eq_sheet["60/40 (growth of $1)"] = metrics.equity_curve(bench_6040)
+        ret_sheet["60/40"] = bench_6040
     workbook_sheets = {
         "Key Metrics": table,
-        "Equity Curves": pd.DataFrame({"Strategy (growth of $1)": port_eq,
-                                       "Passive EW (growth of $1)": bench_eq}),
-        "Daily Returns": pd.DataFrame({"Strategy": port, "Passive EW": bench}),
+        "Equity Curves": pd.DataFrame(eq_sheet),
+        "Daily Returns": pd.DataFrame(ret_sheet),
         "Monthly Returns": pivot,
+        "Yearly Returns": yearly,
     }
     if crisis_num is not None:
         workbook_sheets["Crisis Playbook"] = crisis_num
