@@ -1,6 +1,6 @@
 """Portfolio construction & risk tab: weighting schemes, Monte Carlo
-projection, and factor-exposure regression — all run on the frozen live
-strategy so the analyses describe one coherent object."""
+projection, and factor-exposure regression, run on a user-configured strategy
+over the full asset universe."""
 from __future__ import annotations
 
 import numpy as np
@@ -10,7 +10,17 @@ import streamlit as st
 
 from app.theme import ACCENT, GOLD, GREY, PRIMARY, RED, style_fig
 from data.loader import UNIVERSE, load_universe
-from engine import backtest, factors, live, metrics, portfolio, risk
+from engine import backtest, factors, metrics, portfolio, risk, signals
+
+# Classic textbook parameters per signal; full parameter control lives in the
+# research tab — this tab focuses on sizing and risk, not signal tuning.
+DEFAULT_PARAMS = {
+    "MA Crossover": {"short": 50, "long": 200},
+    "Time-Series Momentum": {"lookback": 126},
+    "Mean Reversion (Z-Score)": {"lookback": 20, "z_entry": 1.0},
+    "Ichimoku Cloud": {"conversion": 9, "base": 26},
+    "Combined": {"short": 50, "long": 200, "lookback": 126},
+}
 
 SCHEME_COLORS = {"Equal Weight": PRIMARY, "Inverse Volatility": ACCENT,
                  "Mean-Variance (tangency)": GOLD}
@@ -20,26 +30,50 @@ FMT = {"CAGR": "{:.2%}", "Ann. Vol": "{:.2%}", "Sharpe": "{:.2f}", "Sortino": "{
        "Hit Rate": "{:.1%}"}
 
 
-@st.cache_data(ttl=3600, show_spinner="Running the frozen strategy…")
-def get_strategy_returns():
-    config = live.load_config()
-    panel = load_universe(config["universe"], config["history_start"])
-    track = live.live_track(panel, config)
-    strat = track["backtest"].strategy_returns.where(panel.notna())
-    return strat, config
+@st.cache_data(ttl=3600, show_spinner="Running the strategy across the universe…")
+def get_strategy_returns(tickers: tuple, start: str, signal_type: str,
+                         long_only: bool, cost_bps: float) -> pd.DataFrame:
+    panel = load_universe(list(tickers), start)
+    sig = signals.build_signal(panel, signal_type, long_only=long_only,
+                               **DEFAULT_PARAMS[signal_type])
+    bt = backtest.run_backtest(panel, sig, cost_bps)
+    return bt.strategy_returns.where(panel.notna())
 
 
 def render() -> None:
-    strat, config = get_strategy_returns()
     st.markdown(
         "Signal research answers *what to trade*; this tab answers **how much of each** — "
-        "and what the resulting portfolio's risk actually looks like. All analyses below "
-        "run on the frozen strategy from the *Live Forward Track* tab, so every number "
-        "describes the same object."
+        "and what the resulting portfolio's risk actually looks like. Pick the strategy "
+        "below (signal parameters use the classic textbook settings — tune them in the "
+        "research tab), and every analysis on this page describes that same portfolio."
     )
 
+    with st.container(border=True):
+        c1, c2, c3 = st.columns([1.5, 1, 1])
+        with c1:
+            tickers = st.multiselect("Asset universe", options=list(UNIVERSE),
+                                     default=list(UNIVERSE), format_func=UNIVERSE.get,
+                                     key="pf_universe")
+        with c2:
+            signal_type = st.selectbox("Signal", signals.SIGNAL_TYPES,
+                                       index=len(signals.SIGNAL_TYPES) - 1,
+                                       key="pf_signal")
+            direction = st.radio("Direction", ["Long / Short", "Long / Flat"],
+                                 horizontal=True, key="pf_dir")
+        with c3:
+            start_year = st.slider("Start year", 2000, 2022, 2010, key="pf_start")
+            cost_bps = st.slider("Transaction cost (bps)", 0.0, 25.0, 5.0, 0.5,
+                                 key="pf_cost")
+
+    if not tickers:
+        st.info("Select at least one asset.")
+        return
+
+    strat = get_strategy_returns(tuple(tickers), f"{start_year}-01-01", signal_type,
+                                 direction == "Long / Flat", cost_bps)
+
     # ============================================================= weighting
-    st.markdown("#### 1 · How should the six sleeves be weighted?")
+    st.markdown(f"#### 1 · How should the {len(tickers)} sleeves be weighted?")
     st.markdown(
         "Three classic answers, from naive to 'optimal': **equal weight** (1/N, no "
         "estimation at all), **inverse volatility** (risk parity's core idea — every asset "
