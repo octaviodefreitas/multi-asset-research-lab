@@ -8,7 +8,7 @@ import streamlit as st
 
 from app import export
 from app.theme import ASSET_COLORS, GREY, PRIMARY, RED, style_fig
-from data.loader import UNIVERSE, load_universe
+from data.loader import UNIVERSE, load_prices, load_universe
 from engine import backtest, metrics, signals
 
 # Parameter grids searched in-sample by the walk-forward optimizer.
@@ -97,7 +97,15 @@ def render() -> None:
             tickers = st.multiselect(
                 "Asset universe", options=list(UNIVERSE),
                 default=list(UNIVERSE), format_func=UNIVERSE.get,
-                help="Each asset is traded independently by the signal, then combined equal-weight.",
+                help="12 asset classes: US / intl / EM equities, aggregate / long-duration / "
+                     "high-yield bonds, gold / oil / broad commodities, real estate, FX and "
+                     "crypto. Each is traded independently by the signal, then combined "
+                     "equal-weight.",
+            )
+            custom_raw = st.text_input(
+                "Add any tickers (comma-separated Yahoo symbols)", "",
+                help="Extend the universe with anything on Yahoo Finance — e.g. "
+                     "NVDA, EWJ, MC.PA, GBPUSD=X.",
             )
             start_year = st.slider("Backtest start year", 2006, 2022, 2010,
                                    help="Assets that launched later (e.g. Bitcoin, 2014) enter when their data begins.")
@@ -152,6 +160,16 @@ def render() -> None:
                 target_vol = st.slider("Target volatility (ann.)", 0.05, 0.25, 0.10, 0.01,
                                        format="%.2f")
 
+    for t in (t.strip().upper() for t in custom_raw.split(",") if t.strip()):
+        if t in tickers:
+            continue
+        try:
+            load_prices(t)
+            tickers.append(t)
+        except Exception:
+            st.warning(f"Could not load data for '{t}' — check the Yahoo Finance "
+                       "spelling; skipped.")
+
     if not tickers:
         st.info("Select at least one asset to run the backtest.")
         return
@@ -197,7 +215,7 @@ def render() -> None:
 
     fig = go.Figure()
     for t in tickers:
-        fig.add_trace(go.Scatter(x=bt.equity.index, y=bt.equity[t], name=UNIVERSE[t],
+        fig.add_trace(go.Scatter(x=bt.equity.index, y=bt.equity[t], name=UNIVERSE.get(t, t),
                                  line=dict(width=1.1, color=ASSET_COLORS.get(t)), opacity=0.55))
     port_eq = metrics.equity_curve(port)
     bench_eq = metrics.equity_curve(bench)
@@ -332,7 +350,7 @@ def render() -> None:
     st.markdown("#### Per-asset breakdown (net of costs)")
     rows = {}
     for t in tickers:
-        rows[UNIVERSE[t]] = metrics.summary(
+        rows[UNIVERSE.get(t, t)] = metrics.summary(
             bt.strategy_returns[t], positions=bt.positions[t], turnover=bt.turnover[t])
     rows["EW Portfolio"] = port_stats
     rows["Buy & Hold (EW)"] = metrics.summary(bench)

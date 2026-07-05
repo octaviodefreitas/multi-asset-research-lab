@@ -15,13 +15,19 @@ CACHE_DIR = Path(__file__).resolve().parent / "cache"
 
 DEFAULT_START = "2006-01-01"
 
-# Ticker -> human-readable label. Six assets, six distinct asset classes.
+# Ticker -> human-readable label, grouped by asset class.
 UNIVERSE = {
     "SPY": "US Equities (SPY)",
-    "AGG": "US Bonds (AGG)",
+    "EFA": "Intl Developed Equities (EFA)",
+    "EEM": "Emerging Markets (EEM)",
+    "AGG": "US Aggregate Bonds (AGG)",
+    "TLT": "Long-Term US Treasuries (TLT)",
+    "HYG": "High-Yield Credit (HYG)",
     "GLD": "Gold (GLD)",
-    "EURUSD=X": "EUR/USD FX Spot",
     "USO": "Crude Oil (USO)",
+    "DBC": "Broad Commodities (DBC)",
+    "VNQ": "US Real Estate (VNQ)",
+    "EURUSD=X": "EUR/USD FX Spot",
     "BTC-USD": "Bitcoin (BTC-USD)",
 }
 

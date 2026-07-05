@@ -12,10 +12,16 @@ GREY = "#8B949E"
 # Stable per-asset colors across all charts.
 ASSET_COLORS = {
     "SPY": "#5B8DEF",
+    "EFA": "#3D6FD4",
+    "EEM": "#7FB3F5",
     "AGG": "#9B8AFB",
+    "TLT": "#7A6AE0",
+    "HYG": "#C29BF2",
     "GLD": "#F2C94C",
-    "EURUSD=X": "#56CCF2",
     "USO": "#F2994A",
+    "DBC": "#D9822B",
+    "VNQ": "#6FCF97",
+    "EURUSD=X": "#56CCF2",
     "BTC-USD": "#EB5757",
     "EW Portfolio": "#00D4AA",
     "Buy & Hold (EW)": "#8B949E",

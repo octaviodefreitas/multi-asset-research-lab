@@ -20,7 +20,8 @@ st.markdown(
       <h1 style="margin-bottom: 0;">Multi-Asset Research &amp; Execution Lab</h1>
       <p style="color: #8B949E; font-size: 1.05rem; margin-top: 0.25rem;">
         Systematic signal research, walk-forward backtesting and execution-quality
-        analysis across equities, bonds, gold, FX, oil and crypto.
+        analysis across 12 asset classes — global equities, bonds, credit,
+        commodities, real estate, FX and crypto.
       </p>
       <p style="color: #E6EDF3; font-size: 0.95rem; margin-top: 0.35rem;">
         Built by <a href="https://www.linkedin.com/in/octavio-de-freitas"
