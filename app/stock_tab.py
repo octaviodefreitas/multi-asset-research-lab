@@ -61,7 +61,7 @@ def render() -> None:
             start_year = st.slider("Start year", 2000, 2022, 2010, key="stock_start",
                                    help="From 2000 the sample includes the dot-com crash, "
                                         "the GFC, COVID and the 2022 bear market.")
-            direction = st.radio("Direction", ["Long / Short", "Long / Flat"],
+            direction = st.radio("Direction", ["Long / Flat", "Long / Short"],
                                  horizontal=True, key="stock_dir")
             cost_bps = st.slider("Transaction cost (bps)", 0.0, 25.0, 5.0, 0.5, key="stock_cost",
                                  help="Single stocks trade with wider spreads than index ETFs — "

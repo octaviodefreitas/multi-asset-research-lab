@@ -119,8 +119,11 @@ def render() -> None:
                                             "Mean Reversion: fade prices stretched away from "
                                             "their rolling mean (countertrend). "
                                             "Combined: average of the two trend signals.")
-            direction = st.radio("Direction", ["Long / Short", "Long / Flat"], horizontal=True,
-                                 help="Long/Flat never shorts — it goes to cash on a sell signal.")
+            direction = st.radio("Direction", ["Long / Flat", "Long / Short"], horizontal=True,
+                                 help="Long/Flat (default) goes to cash on a sell signal — the "
+                                      "right specification for assets that earn a structural risk "
+                                      "premium; shorting them pays that premium away. Long/Short "
+                                      "also takes short positions.")
         with c3:
             cost_bps = st.slider("Transaction cost (bps per unit traded)", 0.0, 25.0, 5.0, 0.5,
                                  help="Charged on every position change: |Δposition| × cost. "

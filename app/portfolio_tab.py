@@ -58,7 +58,7 @@ def render() -> None:
             signal_type = st.selectbox("Signal", signals.SIGNAL_TYPES,
                                        index=len(signals.SIGNAL_TYPES) - 1,
                                        key="pf_signal")
-            direction = st.radio("Direction", ["Long / Short", "Long / Flat"],
+            direction = st.radio("Direction", ["Long / Flat", "Long / Short"],
                                  horizontal=True, key="pf_dir")
         with c3:
             start_year = st.slider("Start year", 2000, 2022, 2010, key="pf_start")
