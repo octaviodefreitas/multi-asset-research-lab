@@ -24,15 +24,15 @@ def render() -> None:
     freeze, live_r = track["freeze"], track["live"]
 
     st.markdown(
-        f"Backtests can always be tuned after the fact — a **forward track record** cannot. "
+        f"Backtests can always be tuned after the fact, a **forward track record** cannot. "
         f"On **{freeze:%d %B %Y}** this strategy's parameters were frozen and "
         f"[committed to the public git history]({REPO}/commits/main/live_config.json), where "
         f"they cannot be quietly changed. Everything on this page after that date is the "
         f"strategy trading (on paper) through data that **did not exist when the parameters "
-        f"were chosen** — the strongest possible answer to “isn't this curve-fit?”"
+        f"were chosen**, the strongest possible answer to “isn't this curve-fit?”"
     )
     signal_desc = config["signal_type"]
-    direction_desc = ("long/flat — downtrending assets go to cash, never short"
+    direction_desc = ("long/flat, downtrending assets go to cash, never short"
                       if config["direction"] == "long_flat" else "long/short")
 
     with st.expander("How the track record is verifiable"):
@@ -44,7 +44,7 @@ def render() -> None:
    this file.
 2. Git records *when* that file was committed. Since the strategy is deterministic,
    recomputing it from fresh market data reproduces exactly what a live run would
-   have done since that date — no database needed, and nothing to take on trust.
+   have done since that date, no database needed, and nothing to take on trust.
 3. Anyone can clone the repository, check the commit date, run the code and get
    the same numbers. Changing the parameters would show up in the file's
    [commit history]({REPO}/commits/main/live_config.json).
@@ -56,7 +56,7 @@ def render() -> None:
 
 **What "long/flat" means:** when an asset's signal turns positive the strategy
 owns it; when the signal turns negative the strategy sells and holds cash for
-that sleeve — it steps aside rather than betting on further falls ("shorting").
+that sleeve, it steps aside rather than betting on further falls ("shorting").
 Stocks and bonds drift upward over the long run because investors are paid a
 *risk premium* for holding them; shorting such assets means paying that premium
 away, so going to cash is the better-specified response to a downtrend.
@@ -74,15 +74,15 @@ away, so going to cash is the better-specified response to a downtrend.
               help="Days elapsed since the parameter freeze. The record grows automatically.")
     c2.metric("Return since freeze", f"{ret_live:+.2%}",
               help="Cumulative net portfolio return over the live period.")
-    c3.metric("Live Sharpe (ann.)", f"{sharpe_live:.2f}" if sharpe_live is not None else "—",
-              help="Shown once at least one month of live data exists — annualized "
+    c3.metric("Live Sharpe (ann.)", f"{sharpe_live:.2f}" if sharpe_live is not None else "n/a",
+              help="Shown once at least one month of live data exists, annualized "
                    "ratios on a handful of days are statistically meaningless.")
     c4.metric("Live max drawdown", f"{dd_live:.2%}",
               help="Worst peak-to-trough loss within the live period.")
 
     if days_live < 5:
         st.info(
-            f"The track record began accruing on {freeze:%d %B %Y}. Early days — every "
+            f"The track record began accruing on {freeze:%d %B %Y}. Early days, every "
             "market day from here on adds to it automatically. Check back over the "
             "coming weeks and months."
         )
@@ -101,13 +101,13 @@ away, so going to cash is the better-specified response to a downtrend.
                       opacity=0.06, line_width=0)
     fig.add_vline(x=freeze, line_dash="dash", line_color=PRIMARY,
                   annotation_text=" parameters frozen", annotation_font_color=PRIMARY)
-    style_fig(fig, "Growth of $1 — grey is backtest, teal is the live out-of-sample record",
+    style_fig(fig, "Growth of $1: grey is backtest, teal is the live out-of-sample record",
               height=460, y_title="Growth of $1")
     st.plotly_chart(fig, width="stretch")
     st.caption(
         "**How to read this:** everything left of the dashed line is a backtest and should "
         "be discounted accordingly. Everything right of it was produced on data that did not "
-        "exist when the strategy was fixed — the only part that deserves full trust. If the "
+        "exist when the strategy was fixed, the only part that deserves full trust. If the "
         "live segment behaves roughly like the backtest (similar volatility and drawdowns, "
         "not necessarily identical returns), the research process is doing its job."
     )
@@ -118,7 +118,7 @@ away, so going to cash is the better-specified response to a downtrend.
                                        name="Live equity", fill="tozeroy",
                                        line=dict(width=2.4, color=PRIMARY)))
         live_only.add_hline(y=1.0, line_dash="dash", line_color="#2C3644")
-        style_fig(live_only, "Live period only — growth of $1 since the freeze",
+        style_fig(live_only, "Live period only: growth of $1 since the freeze",
                   height=320, y_title="Growth of $1")
         st.plotly_chart(live_only, width="stretch")
 
@@ -132,7 +132,7 @@ away, so going to cash is the better-specified response to a downtrend.
                      "Position (of sleeve)": f"{value:+.0%}"})
     st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
     st.caption(
-        "**How to read this:** the signal computed at the latest close — the position the "
+        "**How to read this:** the signal computed at the latest close, the position the "
         "strategy carries into the next trading session. Each asset is an equal sleeve of "
         "the portfolio; ±50% means the two component signals (trend and momentum) currently "
         "disagree on that asset, so conviction is halved."

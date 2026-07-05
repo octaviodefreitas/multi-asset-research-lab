@@ -43,7 +43,7 @@ def _cache_path(ticker: str) -> Path:
 
 def _download(ticker: str) -> pd.DataFrame:
     # Always fetch from DEFAULT_START so one cached file serves any requested
-    # start date via slicing — the cache must never depend on the request.
+    # start date via slicing, the cache must never depend on the request.
     raw = yf.download(ticker, start=DEFAULT_START, auto_adjust=True, progress=False)
     if raw is None or raw.empty:
         raise ValueError(f"No data returned for {ticker}")
@@ -60,7 +60,7 @@ def load_prices(ticker: str, start: str = DEFAULT_START, max_age_hours: float = 
     """Daily OHLCV for one ticker from `start` onwards.
 
     The parquet cache always holds the full history (from DEFAULT_START), and
-    the requested start date is applied by slicing — so changing `start` never
+    the requested start date is applied by slicing, so changing `start` never
     requires a re-download and always takes effect.
     """
     CACHE_DIR.mkdir(exist_ok=True)

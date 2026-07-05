@@ -13,7 +13,7 @@ from data.loader import UNIVERSE, load_universe
 from engine import backtest, factors, metrics, portfolio, risk, signals
 
 # Classic textbook parameters per signal; full parameter control lives in the
-# research tab — this tab focuses on sizing and risk, not signal tuning.
+# research tab, this tab focuses on sizing and risk, not signal tuning.
 DEFAULT_PARAMS = {
     "MA Crossover": {"short": 50, "long": 200},
     "Time-Series Momentum": {"lookback": 126},
@@ -42,9 +42,9 @@ def get_strategy_returns(tickers: tuple, start: str, signal_type: str,
 
 def render() -> None:
     st.markdown(
-        "Signal research answers *what to trade*; this tab answers **how much of each** — "
+        "Signal research answers *what to trade*; this tab answers **how much of each**, "
         "and what the resulting portfolio's risk actually looks like. Pick the strategy "
-        "below (signal parameters use the classic textbook settings — tune them in the "
+        "below (signal parameters use the classic textbook settings, tune them in the "
         "research tab), and every analysis on this page describes that same portfolio."
     )
 
@@ -76,7 +76,7 @@ def render() -> None:
     st.markdown(f"#### 1 · How should the {len(tickers)} sleeves be weighted?")
     st.markdown(
         "Three classic answers, from naive to 'optimal': **equal weight** (1/N, no "
-        "estimation at all), **inverse volatility** (risk parity's core idea — every asset "
+        "estimation at all), **inverse volatility** (risk parity's core idea, every asset "
         "contributes similar risk), and **mean-variance** (Markowitz's tangency portfolio, "
         "re-estimated monthly from trailing data). The punchline of decades of research: "
         "the 'optimal' one often loses to 1/N out of sample, because it trusts noisy "
@@ -113,20 +113,20 @@ def render() -> None:
     wfig.update_layout(hovermode="closest")
     st.plotly_chart(wfig, width="stretch")
     st.caption(
-        "**How to read this:** all three portfolios trade the *same* signals — only the "
+        "**How to read this:** all three portfolios trade the *same* signals, only the "
         "sizing differs. Inverse-vol shrinks the wild assets (Bitcoin, oil) and grows the "
         "calm ones (bonds), usually smoothing the ride. Mean-variance concentrates into "
-        "whatever recently looked best — elegant in theory, fragile in practice. If 1/N "
+        "whatever recently looked best, elegant in theory, fragile in practice. If 1/N "
         "keeps up with the clever schemes, that is not a bug; it is one of the most "
         "replicated findings in portfolio research (DeMiguel et al., 2009)."
     )
 
     # ============================================================= monte carlo
-    st.markdown("#### 2 · Monte Carlo — the range of outcomes luck alone allows")
+    st.markdown("#### 2 · Monte Carlo: the range of outcomes luck alone allows")
     st.markdown(
         "One equity curve is a single draw from a distribution. Resampling blocks of the "
         "strategy's own history thousands of times shows the **range** of next-12-month "
-        "outcomes consistent with its behavior — and how bad the unlucky draws get."
+        "outcomes consistent with its behavior, and how bad the unlucky draws get."
     )
     n_paths = st.select_slider("Simulated paths", [500, 1000, 2500, 5000], 1000)
     ew = rets["Equal Weight"]
@@ -136,12 +136,12 @@ def render() -> None:
     ffig = go.Figure()
     ffig.add_trace(go.Scatter(x=fan.index, y=fan["p95"], name="95th percentile",
                               line=dict(width=0.5, color=PRIMARY), showlegend=False))
-    ffig.add_trace(go.Scatter(x=fan.index, y=fan["p5"], name="5th–95th percentile band",
+    ffig.add_trace(go.Scatter(x=fan.index, y=fan["p5"], name="5th-95th percentile band",
                               fill="tonexty", fillcolor="rgba(0,212,170,0.12)",
                               line=dict(width=0.5, color=PRIMARY)))
-    ffig.add_trace(go.Scatter(x=fan.index, y=fan["p75"], name="25th–75th band",
+    ffig.add_trace(go.Scatter(x=fan.index, y=fan["p75"], name="25th-75th band",
                               line=dict(width=0), showlegend=False))
-    ffig.add_trace(go.Scatter(x=fan.index, y=fan["p25"], name="25th–75th percentile band",
+    ffig.add_trace(go.Scatter(x=fan.index, y=fan["p25"], name="25th-75th percentile band",
                               fill="tonexty", fillcolor="rgba(0,212,170,0.22)",
                               line=dict(width=0)))
     ffig.add_trace(go.Scatter(x=fan.index, y=fan["p50"], name="Median",
@@ -166,14 +166,14 @@ def render() -> None:
         "strategy's real history (block bootstrap, preserving volatility clustering). "
         "The width of the band *is* the honest uncertainty: anyone who shows you a single "
         "projected line is hiding it. Note the band assumes the future resembles the "
-        "past — regime changes can and do fall outside it."
+        "past, regime changes can and do fall outside it."
     )
 
     # ============================================================= factors
-    st.markdown("#### 3 · Factor exposure — is it alpha, or repackaged beta?")
+    st.markdown("#### 3 · Factor exposure: is it alpha or repackaged beta?")
     st.markdown(
         "Allocators' first question about any strategy: are these returns just paid "
-        "compensation for known risk factors (market, size, value, momentum — cheaply "
+        "compensation for known risk factors (market, size, value, momentum, cheaply "
         "available in index products), or genuine **alpha**? A regression on the daily "
         "[Fama-French factors](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html) "
         "answers it."
@@ -182,7 +182,7 @@ def render() -> None:
         ff = factors.load_ff_factors()
         reg = factors.factor_regression(ew, ff)
     except Exception:
-        st.info("Factor data (Ken French library) is temporarily unavailable — "
+        st.info("Factor data (Ken French library) is temporarily unavailable, "
                 "this section will reappear when the source responds.")
         return
 
@@ -211,11 +211,11 @@ def render() -> None:
     bfig.update_layout(showlegend=False, hovermode="closest")
     st.plotly_chart(bfig, width="stretch")
     st.caption(
-        "**How to read this:** each bar is the strategy's sensitivity to one factor — "
+        "**How to read this:** each bar is the strategy's sensitivity to one factor, "
         "Mkt-RF is the equity market itself, SMB small-vs-big stocks, HML value-vs-growth, "
         "Mom cross-sectional momentum. Grey bars are statistically indistinguishable from "
         "zero. The flattering result for a trend strategy is small loadings, low R² and "
         "positive alpha; the honest caveat is that a low t-stat means the sample cannot "
-        "yet distinguish that alpha from luck — which is exactly why the live forward "
+        "yet distinguish that alpha from luck, which is exactly why the live forward "
         "track exists."
     )

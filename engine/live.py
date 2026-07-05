@@ -3,7 +3,7 @@
 The parameters in live_config.json were committed to git on the freeze date.
 Because the strategy is fully deterministic given those parameters, recomputing
 it daily from fresh market data reproduces exactly what a live run would have
-done — and the commit timestamp proves the parameters predate the data. Any
+done, and the commit timestamp proves the parameters predate the data. Any
 performance after freeze_date is therefore out-of-sample by construction.
 """
 from __future__ import annotations

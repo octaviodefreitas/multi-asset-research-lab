@@ -21,7 +21,7 @@ DISCLAIMER = ("Backtested / simulated research on historical data. Not live trad
 
 
 def _sparse_year_labels(index: pd.DatetimeIndex) -> list[str]:
-    """One label per year, blank otherwise — keeps the category axis readable."""
+    """One label per year, blank otherwise, keeps the category axis readable."""
     labels, seen = [], set()
     for ts in index:
         if ts.year not in seen:
@@ -105,7 +105,7 @@ def build_tearsheet(subtitle: str,
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
-    _title_slide(prs, "Multi-Asset Systematic Strategy — Tearsheet", subtitle)
+    _title_slide(prs, "Multi-Asset Systematic Strategy Tearsheet", subtitle)
     for title, series, number_format, kind in charts:
         _chart_slide(prs, title, series, number_format, kind)
     for title, df in tables:

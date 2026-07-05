@@ -2,7 +2,7 @@
 
 Daily factor returns come from Ken French's data library (free, the academic
 standard). The regression decomposes a strategy's returns into compensation
-for known risk factors (market, size, value, momentum) plus alpha — the part
+for known risk factors (market, size, value, momentum) plus alpha, the part
 no factor explains.
 """
 from __future__ import annotations
@@ -36,7 +36,7 @@ def _fetch_zip_csv(url: str) -> str:
 
 def _parse_ff_csv(text: str) -> pd.DataFrame:
     """The French CSVs have preamble text, a header row, daily rows (YYYYMMDD),
-    then sometimes an annual section — keep only the daily rows."""
+    then sometimes an annual section, keep only the daily rows."""
     rows: list[list[str]] = []
     header: list[str] | None = None
     for line in text.splitlines():

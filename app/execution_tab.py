@@ -15,8 +15,8 @@ EXEC_UNIVERSE = {t: label for t, label in UNIVERSE.items() if not t.endswith("=X
 
 ALGO_BLURBS = {
     "TWAP": "**TWAP** (Time-Weighted Average Price) slices the order into equal pieces over the horizon. Simple and predictable, but ignores when the market actually trades.",
-    "VWAP": "**VWAP** (Volume-Weighted Average Price) follows the intraday volume curve — trading more at the busy open and close. Lower impact per share, since each slice is a smaller share of what's trading.",
-    "POV": "**POV** (Percentage of Volume) trades a fixed fraction of realized market volume. Adapts to liquidity in real time, but may not finish if volume is thin — leaving unfilled risk on the table.",
+    "VWAP": "**VWAP** (Volume-Weighted Average Price) follows the intraday volume curve, trading more at the busy open and close. Lower impact per share, since each slice is a smaller share of what's trading.",
+    "POV": "**POV** (Percentage of Volume) trades a fixed fraction of realized market volume. Adapts to liquidity in real time, but may not finish if volume is thin, leaving unfilled risk on the table.",
 }
 
 
@@ -36,7 +36,7 @@ def render() -> None:
         "When the strategy rebalances, *how* the trade is executed matters as much as the "
         "signal itself. This simulator takes one rebalancing order and executes it via three "
         "standard algorithms over a synthetic trading session, using a **square-root market "
-        "impact model** plus bid/ask spread cost, then compares **implementation shortfall** — "
+        "impact model** plus bid/ask spread cost, then compares **implementation shortfall**, "
         "the all-in cost versus the price at the moment the order arrived."
     )
     with st.expander("What are TWAP, VWAP and POV?"):
@@ -44,7 +44,7 @@ def render() -> None:
             st.markdown(blurb)
         st.markdown(
             "Costs come from three places: crossing the **bid/ask spread**, **market impact** "
-            "(your own order pushes the price — modeled as impact ∝ σ·√(order/volume), the "
+            "(your own order pushes the price, modeled as impact ∝ σ·√(order/volume), the "
             "canonical square-root law), and **timing risk** (the market drifting while you work "
             "the order)."
         )
@@ -59,7 +59,7 @@ def render() -> None:
             side_label = st.radio("Side", ["Buy", "Sell"], horizontal=True)
         with c2:
             order_pct = st.slider("Order size (% of average daily volume)", 0.5, 25.0, 5.0, 0.5,
-                                  help="Institutional rebalances typically run 1–10% of ADV. "
+                                  help="Institutional rebalances typically run 1-10% of ADV. "
                                        "Bigger orders → more impact, non-linearly.")
             horizon_hours = st.slider("Execution horizon (hours)", 0.5, 6.5, 3.0, 0.5,
                                       help="Longer horizons reduce impact but increase timing risk.")
@@ -73,7 +73,7 @@ def render() -> None:
         a1, a2, a3 = st.columns(3)
         with a1:
             temp_coef = st.slider("Temporary impact coefficient", 0.1, 2.0, 0.7, 0.1,
-                                  help="Scales the square-root impact term. Empirical estimates cluster around 0.5–1.0.")
+                                  help="Scales the square-root impact term. Empirical estimates cluster around 0.5-1.0.")
         with a2:
             perm_coef = st.slider("Permanent impact coefficient", 0.0, 1.0, 0.3, 0.05,
                                   help="Information leakage: how much of your footprint stays in the price.")
@@ -89,7 +89,7 @@ def render() -> None:
 
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Arrival price", f"${stats['price']:,.2f}",
-              help="Last close — the benchmark price the moment the order arrives.")
+              help="Last close, the benchmark price the moment the order arrives.")
     m2.metric("Daily volatility", f"{stats['daily_vol']:.2%}",
               help="Realized daily vol over the past year; drives both impact and timing risk.")
     m3.metric("Avg daily volume", f"{stats['adv']:,.0f}",
@@ -135,7 +135,7 @@ def render() -> None:
         "**How to read this:** lower is cheaper. The bars show the average all-in cost of the "
         "trade in basis points versus the arrival price; the whiskers and boxes show how much "
         "that cost varies run-to-run (timing risk). A good execution desk trades off a slightly "
-        "higher average against a tighter distribution — or vice versa — depending on urgency."
+        "higher average against a tighter distribution, or vice versa, depending on urgency."
     )
 
     # ------------------------------------------------------------- decomposition table
@@ -159,7 +159,7 @@ def render() -> None:
     st.caption(
         "**How to read this:** the shortfall splits into spread paid on every fill, temporary "
         "impact from demanding liquidity, and timing/permanent drift. POV can show a fill rate "
-        "below 100% — the opportunity-cost column prices the risk of the shares it failed to "
+        "below 100%, the opportunity-cost column prices the risk of the shares it failed to "
         "complete inside the horizon."
     )
 
@@ -198,7 +198,7 @@ def render() -> None:
         st.plotly_chart(path_fig, width="stretch")
 
     st.caption(
-        "**How to read this:** the left chart shows each algorithm's pace — TWAP is a straight "
+        "**How to read this:** the left chart shows each algorithm's pace, TWAP is a straight "
         "line, VWAP leans into the heavy open/close volume, POV follows realized volume and may "
         "flatten out unfilled. On the right, every dot is a fill; buys sit above the mid by the "
         "spread plus the impact of that slice."

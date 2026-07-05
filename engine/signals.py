@@ -2,7 +2,7 @@
 
 All signals are causal: the value at date t uses information up to and
 including the close at t. The backtest shifts positions by one bar, so a
-signal observed at t earns the return from t to t+1 — no lookahead bias.
+signal observed at t earns the return from t to t+1, no lookahead bias.
 """
 from __future__ import annotations
 

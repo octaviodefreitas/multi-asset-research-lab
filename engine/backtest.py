@@ -26,7 +26,7 @@ class BacktestResult:
 def run_backtest(close: pd.DataFrame, signal: pd.DataFrame, cost_bps: float = 5.0) -> BacktestResult:
     """Vectorized backtest of one signal panel over a close-price panel.
 
-    Assets contribute zero position (not zero cost — there is nothing to trade)
+    Assets contribute zero position (not zero cost, there is nothing to trade)
     before their first available price.
     """
     signal = signal.reindex(close.index)
@@ -75,7 +75,7 @@ def walk_forward(close: pd.DataFrame, signal_builder, param_grid: list[dict],
     The sample is cut into n_splits + 1 contiguous segments. Split k trains on
     segments [0, k) and tests on segment k, so every parameter choice is made
     strictly before the data it is evaluated on. Rolling signals are causal,
-    so computing them once over the full history introduces no leakage — only
+    so computing them once over the full history introduces no leakage, only
     the parameter *selection* is restricted to the training window.
     """
     valid = close.notna()

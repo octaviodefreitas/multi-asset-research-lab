@@ -1,5 +1,5 @@
 """Portfolio construction: turning per-asset strategy returns into portfolio
-weights. All schemes are causal — weights applied on day t are estimated from
+weights. All schemes are causal, weights applied on day t are estimated from
 data through day t-1 or earlier.
 """
 from __future__ import annotations
@@ -29,7 +29,7 @@ def tangency_weights(returns: pd.DataFrame, lookback: int = 252) -> pd.DataFrame
     the last day of each month from a trailing window and applied to the
     following month only. Normalized to gross leverage 1 (Σ|w| = 1).
 
-    Deliberately naive — sample means are terrible forecasts, which is exactly
+    Deliberately naive, sample means are terrible forecasts, which is exactly
     the point of comparing this against 1/N.
     """
     weights = pd.DataFrame(np.nan, index=returns.index, columns=returns.columns)

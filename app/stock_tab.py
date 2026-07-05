@@ -35,9 +35,9 @@ def get_pair(stock: str, bench: str, start: str) -> pd.DataFrame:
 def render() -> None:
     st.markdown(
         "The same signal engine, pointed at a **single stock** instead of an asset-class "
-        "portfolio — and judged the way professional equity investors judge everything: "
+        "portfolio, and judged the way professional equity investors judge everything: "
         "**relative to a benchmark**. Beta measures how much of the performance is just "
-        "market exposure; **alpha** is what remains after stripping that out — the part a "
+        "market exposure; **alpha** is what remains after stripping that out, the part a "
         "manager can actually take credit for. Single names are far noisier than indices "
         "(earnings surprises, company-specific news), so this is a much harsher test of "
         "a signal than the diversified portfolio in the first tab."
@@ -54,7 +54,7 @@ def render() -> None:
             ticker = custom.strip().upper() or choice
         with c2:
             bench = st.selectbox("Benchmark", list(BENCHMARKS), format_func=BENCHMARKS.get,
-                                 help="The index the stock strategy has to beat — and the "
+                                 help="The index the stock strategy has to beat, and the "
                                       "yardstick for alpha and beta.")
             signal_type = st.selectbox("Signal", signals.SIGNAL_TYPES, key="stock_signal")
         with c3:
@@ -64,13 +64,13 @@ def render() -> None:
             direction = st.radio("Direction", ["Long / Flat", "Long / Short"],
                                  horizontal=True, key="stock_dir")
             cost_bps = st.slider("Transaction cost (bps)", 0.0, 25.0, 5.0, 0.5, key="stock_cost",
-                                 help="Single stocks trade with wider spreads than index ETFs — "
-                                      "5–10 bps is realistic for large caps.")
+                                 help="Single stocks trade with wider spreads than index ETFs, "
+                                      "5-10 bps is realistic for large caps.")
             regime_on = st.toggle("Benchmark regime filter (200-day MA)", key="stock_regime",
                                   help="Only allow long positions while the benchmark index is "
                                        "above its own 200-day moving average (and shorts only "
                                        "below it). Single-stock signals are noisy; the index "
-                                       "trend is far more reliable — this gates the former "
+                                       "trend is far more reliable, this gates the former "
                                        "with the latter.")
 
         p1, p2, p3 = st.columns(3)
@@ -131,7 +131,7 @@ def render() -> None:
     rel_strat = metrics.benchmark_relative(strat, bench_bh)
 
     # ------------------------------------------------------------- headline
-    st.markdown(f"#### Strategy on {ticker} vs {bench} — headline metrics")
+    st.markdown(f"#### Strategy on {ticker} vs {bench}: headline metrics")
     cols = st.columns(6)
     headline = [
         ("CAGR", f"{stats_strat['CAGR']:.2%}", "Compound annual growth of the strategy on this stock."),
@@ -143,7 +143,7 @@ def render() -> None:
          "Sensitivity to the benchmark: 1 = moves one-for-one with the index, "
          "0 = independent of it. Trend strategies typically show low beta."),
         ("Info Ratio", f"{rel_strat['Information Ratio']:.2f}",
-         "Active return per unit of tracking error — the benchmark-relative Sharpe. "
+         "Active return per unit of tracking error, the benchmark-relative Sharpe. "
          "Above ~0.5 is considered good among professional managers."),
         ("Max Drawdown", f"{stats_strat['Max Drawdown']:.1%}", "Worst peak-to-trough loss."),
     ]
@@ -168,7 +168,7 @@ def render() -> None:
         fig.update_yaxes(type="log")
     st.plotly_chart(fig, width="stretch")
     st.caption(
-        "**How to read this:** three ways of deploying the same dollar — passively in the "
+        "**How to read this:** three ways of deploying the same dollar, passively in the "
         "index (grey), passively in the stock (blue), or timed by the signal (teal). The "
         "interesting comparisons are teal vs blue (does timing beat holding the stock?) and "
         "teal vs grey (does the whole exercise beat just buying the index?)."
@@ -197,7 +197,7 @@ def render() -> None:
         dd.add_trace(go.Scatter(x=stock_bh.index, y=metrics.drawdown_series(stock_bh),
                                 name=f"{ticker} Buy & Hold",
                                 line=dict(color=RED, width=1.2, dash="dot")))
-        style_fig(dd, "Drawdown — % below previous peak", height=360, y_title="Drawdown")
+        style_fig(dd, "Drawdown, % below previous peak", height=360, y_title="Drawdown")
         dd.update_yaxes(tickformat=".0%")
         st.plotly_chart(dd, width="stretch")
         st.caption(
@@ -220,7 +220,7 @@ def render() -> None:
     st.caption(
         "**How to read this:** the buy-and-hold stock row usually shows beta near 1 and "
         "some alpha (the stock's own out/under-performance). A good timed strategy shows "
-        "**lower beta** (less market dependence), a **shallower max drawdown**, and — if "
-        "the signal genuinely works on this name — **positive alpha with an information "
+        "**lower beta** (less market dependence), a **shallower max drawdown**, and, if "
+        "the signal genuinely works on this name, **positive alpha with an information "
         "ratio the stock alone can't match**."
     )

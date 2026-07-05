@@ -38,7 +38,7 @@ EVENTS = [
     ("Dot-com crash", "Dot-com", "2000-03-24", "2002-10-09"),
     ("Global Financial Crisis", "GFC", "2007-10-09", "2009-03-09"),
     ("Eurozone debt crisis", "Euro crisis", "2011-05-02", "2011-10-03"),
-    ("China devaluation & oil crash", "2015–16", "2015-08-10", "2016-02-11"),
+    ("China devaluation & oil crash", "2015-16", "2015-08-10", "2016-02-11"),
     ("Q4 2018 selloff", "Q4 '18", "2018-10-01", "2018-12-24"),
     ("COVID crash", "COVID", "2020-02-19", "2020-03-23"),
     ("2022 inflation bear market", "2022 bear", "2022-01-03", "2022-10-12"),
@@ -86,7 +86,7 @@ def sensitivity_grid(panel: pd.DataFrame, signal_type: str, long_only: bool,
 def render() -> None:
     st.markdown(
         "Systematic trend signals backtested per asset and combined into an "
-        "equal-weight portfolio. Adjust any parameter below — every chart and "
+        "equal-weight portfolio. Adjust any parameter below, every chart and "
         "metric recomputes instantly, with **no lookahead bias**: a signal seen "
         "at today's close only earns tomorrow's return."
     )
@@ -105,7 +105,7 @@ def render() -> None:
             )
             custom_raw = st.text_input(
                 "Add any tickers (comma-separated Yahoo symbols)", "",
-                help="Extend the universe with anything on Yahoo Finance — e.g. "
+                help="Extend the universe with anything on Yahoo Finance, e.g. "
                      "NVDA, EWJ, MC.PA, GBPUSD=X.",
             )
             start_year = st.slider("Backtest start year", 2000, 2022, 2000,
@@ -120,7 +120,7 @@ def render() -> None:
                                             "their rolling mean (countertrend). "
                                             "Combined: average of the two trend signals.")
             direction = st.radio("Direction", ["Long / Flat", "Long / Short"], horizontal=True,
-                                 help="Long/Flat (default) goes to cash on a sell signal — the "
+                                 help="Long/Flat (default) goes to cash on a sell signal, the "
                                       "right specification for assets that earn a structural risk "
                                       "premium; shorting them pays that premium away. Long/Short "
                                       "also takes short positions.")
@@ -129,7 +129,7 @@ def render() -> None:
                                  help="Charged on every position change: |Δposition| × cost. "
                                       "5 bps ≈ realistic all-in cost for liquid ETFs.")
             vol_target_on = st.toggle("Volatility targeting overlay",
-                                      help="Scales positions so each asset targets constant risk — "
+                                      help="Scales positions so each asset targets constant risk, "
                                            "sizes up in calm markets, down in turbulent ones (max 2× leverage).")
 
         p1, p2, p3, p4 = st.columns(4)
@@ -173,7 +173,7 @@ def render() -> None:
             load_prices(t)
             tickers.append(t)
         except Exception:
-            st.warning(f"Could not load data for '{t}' — check the Yahoo Finance "
+            st.warning(f"Could not load data for '{t}', check the Yahoo Finance "
                        "spelling; skipped.")
 
     if not tickers:
@@ -218,14 +218,14 @@ def render() -> None:
                                  turnover=bt.turnover.sum(axis=1) / max(len(tickers), 1))
 
     # ------------------------------------------------------------- headline
-    st.markdown("#### Equal-weight portfolio — headline metrics")
+    st.markdown("#### Equal-weight portfolio: headline metrics")
     cols = st.columns(6)
     headline = [
         ("CAGR", f"{port_stats['CAGR']:.2%}", "Compound annual growth rate of the strategy."),
         ("Sharpe", f"{port_stats['Sharpe']:.2f}", "Return per unit of risk. Above ~0.8 is respectable for a simple daily strategy."),
         ("Sortino", f"{port_stats['Sortino']:.2f}", "Like Sharpe but only penalizes downside moves."),
         ("Max Drawdown", f"{port_stats['Max Drawdown']:.1%}", "Worst peak-to-trough loss an investor would have endured."),
-        ("Calmar", f"{port_stats['Calmar']:.2f}", "CAGR divided by max drawdown — growth per unit of pain."),
+        ("Calmar", f"{port_stats['Calmar']:.2f}", "CAGR divided by max drawdown, growth per unit of pain."),
         ("Hit Rate", f"{port_stats['Hit Rate']:.1%}", "Share of invested days that made money."),
     ]
     for col, (label, value, help_text) in zip(cols, headline):
@@ -235,14 +235,14 @@ def render() -> None:
     tg1, tg2 = st.columns([1, 3])
     with tg1:
         log_scale = st.toggle("Log scale", value=True,
-                              help="Log scale shows compounding fairly — equal vertical distances are equal % moves.")
+                              help="Log scale shows compounding fairly, equal vertical distances are equal % moves.")
     with tg2:
         vol_match = st.toggle(
             "Compare at equal risk (vol-matched)", value=True,
             help="A growth-of-$1 chart rewards whoever took the most risk. This scales the "
                  "strategy (with modest leverage, as institutions run such strategies) to the "
                  "benchmark's volatility, so the lines compare return earned *per unit of "
-                 "risk* — the comparison professionals make. Turn off to see the raw, "
+                 "risk*, the comparison professionals make. Turn off to see the raw, "
                  "unlevered strategy, which runs at roughly half the benchmarks' volatility.",
         )
 
@@ -256,8 +256,8 @@ def render() -> None:
         if strat_vol and strat_vol > 0:
             scale = ref_vol / strat_vol
     plot_port_eq = metrics.equity_curve(port * scale) if vol_match else port_eq
-    strat_name = (f"Strategy — EW Portfolio (×{scale:.1f} vol-matched)"
-                  if vol_match else "Strategy — EW Portfolio")
+    strat_name = (f"Strategy, EW Portfolio (×{scale:.1f} vol-matched)"
+                  if vol_match else "Strategy, EW Portfolio")
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=bench_eq.index, y=bench_eq, name="Passive EW (rebalanced)",
@@ -268,7 +268,7 @@ def render() -> None:
                                  line=dict(width=1.7, color="#C9A227", dash="dot")))
     fig.add_trace(go.Scatter(x=plot_port_eq.index, y=plot_port_eq, name=strat_name,
                              line=dict(width=2.8, color=PRIMARY)))
-    style_fig(fig, "Strategy vs benchmarks — growth of $1 (net of costs)", height=460,
+    style_fig(fig, "Strategy vs benchmarks: growth of $1 (net of costs)", height=460,
               y_title="Growth of $1")
     if log_scale:
         fig.update_yaxes(type="log")
@@ -276,7 +276,7 @@ def render() -> None:
     if vol_match:
         st.caption(
             f"**How to read this (equal-risk view):** the strategy is scaled ×{scale:.1f} so "
-            "it runs at the same volatility as the benchmark — now the lines show return "
+            "it runs at the same volatility as the benchmark, now the lines show return "
             "earned per unit of risk, the comparison professionals actually make. Scaling "
             "is implementable with modest leverage and leaves the Sharpe ratio untouched; "
             "drawdowns scale up with it, so compare those in the table below too."
@@ -284,25 +284,25 @@ def render() -> None:
     else:
         st.caption(
             "**How to read this:** three portfolios, same starting dollar. The teal line is the "
-            "strategy. The grey dashed line — **Passive EW** — holds the *same* assets at equal "
+            "strategy. The grey dashed line, **Passive EW**, holds the *same* assets at equal "
             "weight but ignores every signal: the strategy's 'no-skill twin'. The gold dotted "
             "line is the classic **60/40** stock/bond portfolio, the reference every allocator "
             "measures against. **Important:** the strategy runs at roughly *half* the "
-            "benchmarks' volatility, so raw growth understates it — flip on 'Compare at equal "
+            "benchmarks' volatility, so raw growth understates it, flip on 'Compare at equal "
             "risk' above to see the fair comparison, or judge by Sharpe and drawdown in the "
             "table below."
         )
 
-    with st.expander("Per-asset detail — the signal applied to each asset individually"):
+    with st.expander("Per-asset detail: the signal applied to each asset individually"):
         pfig = go.Figure()
         for t in tickers:
             pfig.add_trace(go.Scatter(x=bt.equity.index, y=bt.equity[t],
                                       name=UNIVERSE.get(t, t),
                                       line=dict(width=1.1, color=ASSET_COLORS.get(t)),
                                       opacity=0.6))
-        pfig.add_trace(go.Scatter(x=port_eq.index, y=port_eq, name="Strategy — EW Portfolio",
+        pfig.add_trace(go.Scatter(x=port_eq.index, y=port_eq, name="Strategy, EW Portfolio",
                                   line=dict(width=2.6, color=PRIMARY)))
-        style_fig(pfig, "Per-asset equity curves — growth of $1", height=520,
+        style_fig(pfig, "Per-asset equity curves: growth of $1", height=520,
                   y_title="Growth of $1")
         pfig.update_layout(
             legend=dict(orientation="h", yanchor="top", y=-0.08, xanchor="left", x=0),
@@ -314,7 +314,7 @@ def render() -> None:
         st.caption(
             "**How to read this:** each thin line is the strategy trading one asset on its "
             "own; the teal line is the equal-weight combination of all of them. Notice how "
-            "much smoother the combination is than almost any single line — that is "
+            "much smoother the combination is than almost any single line, that is "
             "diversification across independent trends at work."
         )
 
@@ -330,17 +330,17 @@ def render() -> None:
             dd_fig.add_vrect(x0=s, x1=e, fillcolor=GREY, opacity=0.10, line_width=0,
                              annotation_text=short_name, annotation_position="top left",
                              annotation_font_size=10, annotation_font_color=GREY)
-    style_fig(dd_fig, "Drawdown — % below the previous peak (stress episodes shaded)",
+    style_fig(dd_fig, "Drawdown: % below the previous peak (stress episodes shaded)",
               height=320, y_title="Drawdown")
     dd_fig.update_yaxes(tickformat=".0%")
     st.plotly_chart(dd_fig, width="stretch")
     st.caption(
         "**How to read this:** every dip shows how far the portfolio was underwater versus its "
         "prior high; the shaded bands mark famous market stress episodes. Shallower and shorter "
-        "dips than buy & hold is the main practical benefit of trend-following — but note the "
+        "dips than buy & hold is the main practical benefit of trend-following, but note the "
         "pattern in the bands: slow crises (2008, 2022) suit trend signals, which have time to "
         "flip defensive, while lightning crashes (COVID: −30% in 23 days) hit them before they "
-        "can react. The volatility-targeting overlay above is the standard defense — try it."
+        "can react. The volatility-targeting overlay above is the standard defense, try it."
     )
 
     crisis_rows = []
@@ -350,7 +350,7 @@ def render() -> None:
             continue
         crisis_rows.append({
             "Episode": full_name,
-            "Period": f"{s:%b %Y} – {e:%b %Y}",
+            "Period": f"{s:%b %Y} - {e:%b %Y}",
             "Strategy": (1 + port.loc[s:e]).prod() - 1,
             "Passive EW": (1 + bench.loc[s:e]).prod() - 1,
         })
@@ -363,7 +363,7 @@ def render() -> None:
         for col in ("Strategy", "Passive EW", "Difference"):
             crisis_export[col] = crisis_export[col].map("{:+.1%}".format)
         crisis_export = crisis_export.set_index("Episode")
-        st.markdown("##### Crisis playbook — the same episodes, in numbers")
+        st.markdown("##### Crisis playbook: the same episodes in numbers")
         st.dataframe(
             crisis.style.format({"Strategy": "{:+.1%}", "Passive EW": "{:+.1%}",
                                  "Difference": "{:+.1%}"}),
@@ -372,7 +372,7 @@ def render() -> None:
         st.caption(
             "**How to read this:** the strategy's return over each stress episode versus "
             "passively holding the same assets. Positive differences in crises are what "
-            "allocators call *crisis alpha* — the main reason institutions pay for "
+            "allocators call *crisis alpha*, the main reason institutions pay for "
             "trend-following. Where the difference is negative (fast crashes), that is the "
             "known cost of the approach, not a malfunction; no strategy wins in every regime."
         )
@@ -405,7 +405,7 @@ def render() -> None:
         st.plotly_chart(mh, width="stretch")
         st.caption(
             "**How to read this:** each cell is one calendar month of the portfolio. "
-            "You want scattered reds inside mostly green — clusters of deep red rows "
+            "You want scattered reds inside mostly green, clusters of deep red rows "
             "reveal regimes where the signal breaks down (e.g. sharp reversals that "
             "whipsaw trend-followers)."
         )
@@ -425,7 +425,7 @@ def render() -> None:
         st.caption(
             "**How to read this:** the Sharpe ratio recomputed over a sliding 1-year "
             "window. A strategy that hugs a stable positive level is far more trustworthy "
-            "than one with the same average Sharpe made of wild swings — and stretches "
+            "than one with the same average Sharpe made of wild swings, and stretches "
             "below zero show how long an investor would have had to sit through losses."
         )
 
@@ -446,7 +446,7 @@ def render() -> None:
         ybar.add_trace(go.Bar(
             x=yearly.index.astype(str), y=yearly[col], name=col,
             marker_color=ybar_colors[col],
-            hovertemplate="%{x} — " + col + ": %{y:.1%}<extra></extra>"))
+            hovertemplate="%{x}, " + col + ": %{y:.1%}<extra></extra>"))
     style_fig(ybar, "Total return by calendar year", height=360, y_title="Return")
     ybar.update_yaxes(tickformat=".0%", zeroline=True, zerolinecolor="#2C3644")
     ybar.update_layout(barmode="group", hovermode="closest")
@@ -455,11 +455,11 @@ def render() -> None:
         "**How to read this:** each year's total return, side by side"
         + (" at equal risk (the strategy follows the vol-matched toggle above)"
            if vol_match else
-           " — note the strategy is shown unlevered here, at roughly half the "
+           ", note the strategy is shown unlevered here, at roughly half the "
            "benchmarks' risk")
         + ". The years that matter most are the red ones: 2008 and 2022 are where "
         "the benchmarks crater and the strategy stands apart. In roaring bull years "
-        "the benchmarks win — that is the insurance premium trend-following pays "
+        "the benchmarks win, that is the insurance premium trend-following pays "
         "in good times for protection in bad ones. No strategy wins every year; "
         "the question is *which* years it wins."
     )
@@ -485,7 +485,7 @@ def render() -> None:
     st.markdown("#### Diversification and parameter robustness")
     st.markdown(
         "Two questions every allocator asks. **Left:** does combining assets actually "
-        "diversify — are the per-asset strategies genuinely uncorrelated? **Right:** is the "
+        "diversify, are the per-asset strategies genuinely uncorrelated? **Right:** is the "
         "performance robust to the parameter choice, or did we just find one lucky setting?"
     )
     d_left, d_right = st.columns([1, 1])
@@ -507,7 +507,7 @@ def render() -> None:
             "**How to read this:** each cell is the correlation between the strategy run on "
             "two different assets (+1 = move together, 0 = independent). The closer the "
             "off-diagonal cells are to zero, the more the equal-weight portfolio smooths "
-            "out — six independent return streams cut portfolio volatility far more than "
+            "out, six independent return streams cut portfolio volatility far more than "
             "six copies of the same bet. This is the free lunch of diversification."
         )
 
@@ -563,13 +563,13 @@ def render() -> None:
             st.caption(
                 "**How to read this:** every cell is a complete backtest with those "
                 "parameters (★ = your current sliders). A broad plateau of similar green "
-                "means the signal works across many settings — evidence it captures "
+                "means the signal works across many settings, evidence it captures "
                 "something real. A single bright cell in a sea of red is the classic "
                 "fingerprint of an overfit backtest, and walking forward it would likely fail."
             )
 
     # ------------------------------------------------------------- walk-forward
-    st.markdown("#### Walk-forward validation — is this curve-fit?")
+    st.markdown("#### Walk-forward validation: is this curve-fit?")
     st.markdown(
         "A single backtest with hand-picked parameters can always be tuned until it looks good. "
         "Walk-forward validation is the honest test: the sample is split into consecutive periods, "
@@ -596,7 +596,7 @@ def render() -> None:
                                 line=dict(width=1.6, color=GREY, dash="dash")))
     for s in wf.splits:
         wf_fig.add_vline(x=s.test_start, line_dash="dot", line_color="#2C3644")
-    style_fig(wf_fig, "Out-of-sample equity — parameters re-selected at each dotted line",
+    style_fig(wf_fig, "Out-of-sample equity: parameters re-selected at each dotted line",
               height=380, y_title="Growth of $1")
     st.plotly_chart(wf_fig, width="stretch")
 
@@ -617,20 +617,20 @@ def render() -> None:
     fmt_table = table.copy()
     for col, fmt in METRIC_FORMATS.items():
         fmt_table[col] = fmt_table[col].map(
-            lambda v, f=fmt: "—" if pd.isna(v) else f.format(v))
+            lambda v, f=fmt: ", " if pd.isna(v) else f.format(v))
 
-    subtitle = (f"{signal_type} — " + ", ".join(f"{k}={v}" for k, v in params.items())
+    subtitle = (f"{signal_type}, " + ", ".join(f"{k}={v}" for k, v in params.items())
                 + f" | {direction} | {cost_bps:.0f} bps costs | "
-                + f"{len(tickers)} assets | {panel.index[0]:%Y}–{panel.index[-1]:%Y}"
+                + f"{len(tickers)} assets | {panel.index[0]:%Y}-{panel.index[-1]:%Y}"
                 + " | Octavio De Freitas")
     monthly_ds = lambda s: s.resample("ME").last().dropna()
-    eq_export = {"Strategy — EW Portfolio": monthly_ds(port_eq),
+    eq_export = {"Strategy, EW Portfolio": monthly_ds(port_eq),
                  "Passive EW (rebalanced)": monthly_ds(bench_eq)}
     if bench_6040 is not None:
         eq_export["60/40 (SPY/AGG)"] = monthly_ds(metrics.equity_curve(bench_6040))
     charts = [
         ("Growth of $1 (net of costs)", eq_export, "0.00", "line"),
-        ("Drawdown — % below previous peak",
+        ("Drawdown, % below previous peak",
          {"Strategy": monthly_ds(metrics.drawdown_series(port)),
           "Passive EW": monthly_ds(metrics.drawdown_series(bench))},
          "0%", "line"),
@@ -639,7 +639,7 @@ def render() -> None:
     ]
     export_tables = [("Key metrics (net of costs)", fmt_table)]
     if crisis_export is not None:
-        export_tables.append(("Crisis playbook — strategy vs buy & hold", crisis_export))
+        export_tables.append(("Crisis playbook, strategy vs buy & hold", crisis_export))
 
     eq_sheet = {"Strategy (growth of $1)": port_eq,
                 "Passive EW (growth of $1)": bench_eq}
@@ -660,7 +660,7 @@ def render() -> None:
     with export_slot:
         label, b1, b2 = st.columns([2.4, 1.1, 1.0], vertical_alignment="center")
         label.markdown(
-            "**Export this configuration** — a presentation-ready tearsheet "
+            "**Export this configuration**, a presentation-ready tearsheet "
             "(charts are native, editable PowerPoint objects, disclaimer included) "
             "or a full Excel workbook. Both reflect the sliders as currently set."
         )
@@ -670,7 +670,7 @@ def render() -> None:
             file_name="strategy_tearsheet.pptx",
             mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
             width="stretch",
-            help="Title slide, equity curve, drawdown, key metrics and crisis table — "
+            help="Title slide, equity curve, drawdown, key metrics and crisis table, "
                  "drag the slides straight into a pitch book.",
         )
         b2.download_button(
@@ -680,6 +680,6 @@ def render() -> None:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             width="stretch",
             help="One sheet each: key metrics, equity curves, daily returns, "
-                 "monthly returns and the crisis playbook — everything needed to "
+                 "monthly returns and the crisis playbook, everything needed to "
                  "rebuild any chart in Excel.",
         )

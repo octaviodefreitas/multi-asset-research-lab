@@ -20,7 +20,7 @@ st.markdown(
       <h1 style="margin-bottom: 0;">Multi-Asset Research &amp; Execution Lab</h1>
       <p style="color: #8B949E; font-size: 1.05rem; margin-top: 0.25rem;">
         Systematic signal research, walk-forward backtesting and execution-quality
-        analysis across 12 asset classes — global equities, bonds, credit,
+        analysis across 16 assets: global equities, bonds, credit,
         commodities, real estate, FX and crypto.
       </p>
       <p style="color: #E6EDF3; font-size: 0.95rem; margin-top: 0.35rem;">
@@ -28,7 +28,7 @@ st.markdown(
            style="color: #E6EDF3; text-decoration: none;"><b>Octavio De Freitas</b></a> ·
         <a href="https://github.com/octaviodefreitas/multi-asset-research-lab"
            style="color: #00D4AA; text-decoration: none;">View source on GitHub</a> ·
-        Feedback welcome —
+        Feedback welcome,
         <a href="https://www.linkedin.com/in/octavio-de-freitas"
            style="color: #00D4AA; text-decoration: none;">connect on LinkedIn</a>
       </p>
@@ -38,18 +38,18 @@ st.markdown(
 )
 
 st.warning(
-    "**Disclaimer** — All results shown here are backtested / simulated research "
+    "**Disclaimer**: All results shown here are backtested / simulated research "
     "on historical data. They are not live trading performance, involve no real "
     "capital, and do not constitute investment advice. Backtested results are "
     "subject to overfitting and survivorship effects and will differ from live results.",
     icon="⚠️",
 )
 
-with st.expander("**About this project — what it is, why it exists, and how to explore it**"):
+with st.expander("**About this project: what it is, why it exists, and how to explore it**"):
     st.markdown(
         """
 **What this is.** An end-to-end demonstration of how a systematic trading strategy
-goes from idea to (simulated) execution — the same workflow a quantitative trading
+goes from idea to (simulated) execution, the same workflow a quantitative trading
 desk follows: get clean data, build a signal, backtest it honestly, stress-test it
 for overfitting, and then measure what it would actually cost to trade.
 
@@ -63,15 +63,15 @@ The full source code is open on
 unit tests for all of the financial math.
 
 **How to explore it in 60 seconds.**
-1. In the **Signal Research & Backtest** tab, pick a signal and drag the sliders —
+1. In the **Signal Research & Backtest** tab, pick a signal and drag the sliders,
    every chart and metric recomputes live. The teal line beating (or not beating!)
    the grey dashed buy-and-hold line is the whole story of the strategy.
-2. Scroll down to **walk-forward validation** — the honest test, where parameters
+2. Scroll down to **walk-forward validation**, the honest test, where parameters
    are chosen only on past data and judged on unseen data. Comparing in-sample vs
    out-of-sample Sharpe is how professionals detect overfitting.
 3. In the **Single Stock vs Benchmark** tab, point the same engine at any
    individual stock (type any ticker!) and judge it the way equity managers are
-   judged — by **alpha, beta and information ratio** against an index.
+   judged, by **alpha, beta and information ratio** against an index.
 4. The **Portfolio & Risk** tab covers how much of each asset to hold (equal
    weight vs risk parity vs mean-variance), the honest range of next-year
    outcomes (Monte Carlo), and whether returns are real alpha or repackaged
@@ -84,7 +84,7 @@ unit tests for all of the financial math.
    everything after that date is a genuine out-of-sample record that grows
    daily and cannot be retro-fitted.
 
-**No finance background needed** — every chart has a plain-language
+**No finance background needed**, every chart has a plain-language
 *"How to read this"* caption underneath, and every slider has a tooltip (hover
 over the small **?** icons) explaining what it controls and what realistic
 values look like.
@@ -120,8 +120,8 @@ st.markdown(
     "<a href='https://github.com/octaviodefreitas/multi-asset-research-lab' "
     "style='color:#00D4AA; text-decoration:none;'>GitHub</a> · "
     "<a href='https://www.linkedin.com/in/octavio-de-freitas' "
-    "style='color:#00D4AA; text-decoration:none;'>LinkedIn</a> — questions and "
+    "style='color:#00D4AA; text-decoration:none;'>LinkedIn</a>, questions and "
     "feedback welcome · "
-    "Data: Yahoo Finance (daily, adjusted). Simulated research only — not investment advice.</p>",
+    "Data: Yahoo Finance (daily, adjusted). Simulated research only, not investment advice.</p>",
     unsafe_allow_html=True,
 )

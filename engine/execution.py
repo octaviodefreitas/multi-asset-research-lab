@@ -43,7 +43,7 @@ def vwap_schedule(quantity: float, volume_profile: np.ndarray) -> np.ndarray:
 
 def pov_schedule(quantity: float, market_volumes: np.ndarray, participation: float) -> np.ndarray:
     """Trade a fixed fraction of realized market volume until filled.
-    May not complete within the horizon — that is the POV trade-off."""
+    May not complete within the horizon, that is the POV trade-off."""
     schedule = np.zeros(len(market_volumes))
     remaining = quantity
     for i, v in enumerate(market_volumes):
