@@ -224,11 +224,31 @@ def render() -> None:
         col.metric(label, value, help=help_text)
 
     # ------------------------------------------------------------- charts
-    log_scale = st.toggle("Log scale", value=True,
-                          help="Log scale shows compounding fairly — equal vertical distances are equal % moves.")
+    tg1, tg2 = st.columns([1, 3])
+    with tg1:
+        log_scale = st.toggle("Log scale", value=True,
+                              help="Log scale shows compounding fairly — equal vertical distances are equal % moves.")
+    with tg2:
+        vol_match = st.toggle(
+            "Compare at equal risk (vol-matched)",
+            help="A growth-of-$1 chart rewards whoever took the most risk. This scales the "
+                 "strategy (with modest leverage, as institutions run such strategies) to the "
+                 "benchmark's volatility, so the lines compare return earned *per unit of "
+                 "risk*. Scaling never changes the Sharpe ratio — only the lens.",
+        )
 
     port_eq = metrics.equity_curve(port)
     bench_eq = metrics.equity_curve(bench)
+
+    ref_bench = bench_6040 if bench_6040 is not None else bench
+    scale = 1.0
+    if vol_match:
+        ref_vol, strat_vol = metrics.annualized_vol(ref_bench), metrics.annualized_vol(port)
+        if strat_vol and strat_vol > 0:
+            scale = ref_vol / strat_vol
+    plot_port_eq = metrics.equity_curve(port * scale) if vol_match else port_eq
+    strat_name = (f"Strategy — EW Portfolio (×{scale:.1f} vol-matched)"
+                  if vol_match else "Strategy — EW Portfolio")
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=bench_eq.index, y=bench_eq, name="Passive EW (rebalanced)",
@@ -237,21 +257,32 @@ def render() -> None:
         eq_6040 = metrics.equity_curve(bench_6040)
         fig.add_trace(go.Scatter(x=eq_6040.index, y=eq_6040, name="60/40 (SPY/AGG)",
                                  line=dict(width=1.7, color="#C9A227", dash="dot")))
-    fig.add_trace(go.Scatter(x=port_eq.index, y=port_eq, name="Strategy — EW Portfolio",
+    fig.add_trace(go.Scatter(x=plot_port_eq.index, y=plot_port_eq, name=strat_name,
                              line=dict(width=2.8, color=PRIMARY)))
     style_fig(fig, "Strategy vs benchmarks — growth of $1 (net of costs)", height=460,
               y_title="Growth of $1")
     if log_scale:
         fig.update_yaxes(type="log")
     st.plotly_chart(fig, width="stretch")
-    st.caption(
-        "**How to read this:** three portfolios, same starting dollar. The teal line is the "
-        "strategy. The grey dashed line — **Passive EW** — holds the *same* assets at equal "
-        "weight but ignores every signal: the strategy's 'no-skill twin'. Beating it proves "
-        "the signal adds value. The gold dotted line is the classic **60/40** stock/bond "
-        "portfolio, the reference every allocator measures against. Beating that proves the "
-        "whole approach earns a place in a portfolio."
-    )
+    if vol_match:
+        st.caption(
+            f"**How to read this (equal-risk view):** the strategy is scaled ×{scale:.1f} so "
+            "it runs at the same volatility as the benchmark — now the lines show return "
+            "earned per unit of risk, the comparison professionals actually make. Scaling "
+            "is implementable with modest leverage and leaves the Sharpe ratio untouched; "
+            "drawdowns scale up with it, so compare those in the table below too."
+        )
+    else:
+        st.caption(
+            "**How to read this:** three portfolios, same starting dollar. The teal line is the "
+            "strategy. The grey dashed line — **Passive EW** — holds the *same* assets at equal "
+            "weight but ignores every signal: the strategy's 'no-skill twin'. The gold dotted "
+            "line is the classic **60/40** stock/bond portfolio, the reference every allocator "
+            "measures against. **Important:** the strategy runs at roughly *half* the "
+            "benchmarks' volatility, so raw growth understates it — flip on 'Compare at equal "
+            "risk' above to see the fair comparison, or judge by Sharpe and drawdown in the "
+            "table below."
+        )
 
     with st.expander("Per-asset detail — the signal applied to each asset individually"):
         pfig = go.Figure()
