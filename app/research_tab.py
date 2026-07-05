@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from app import export
-from app.theme import ASSET_COLORS, GREY, PRIMARY, RED, style_fig
+from app.theme import ASSET_COLORS, GREY, PRIMARY, RED, short_label, style_fig
 from data.loader import UNIVERSE, load_prices, load_universe
 from engine import backtest, metrics, signals
 
@@ -380,8 +380,9 @@ def render() -> None:
 
     with d_left:
         corr = bt.strategy_returns.where(valid).corr()
+        names = [short_label(t) for t in corr.columns]
         ch = go.Figure(go.Heatmap(
-            z=corr.values, x=corr.columns, y=corr.index,
+            z=corr.values, x=names, y=names,
             colorscale="RdBu", zmin=-1, zmax=1,
             text=np.round(corr.values, 2), texttemplate="%{text}",
             colorbar=dict(title="ρ"),

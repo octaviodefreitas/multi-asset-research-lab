@@ -33,6 +33,19 @@ ASSET_COLORS = {
 
 ALGO_COLORS = {"TWAP": "#5B8DEF", "VWAP": "#00D4AA", "POV": "#F2994A"}
 
+# Compact display names for axes where full labels would not fit; Yahoo's raw
+# API codes (EURUSD=X, JPY=X, BTC-USD) are not shown to users.
+SHORT_LABELS = {
+    "EURUSD=X": "EUR/USD",
+    "GBPUSD=X": "GBP/USD",
+    "JPY=X": "USD/JPY",
+    "BTC-USD": "BTC",
+}
+
+
+def short_label(ticker: str) -> str:
+    return SHORT_LABELS.get(ticker, ticker)
+
 
 def style_fig(fig: go.Figure, title: str | None = None, height: int = 420,
               y_title: str | None = None, x_title: str | None = None) -> go.Figure:
