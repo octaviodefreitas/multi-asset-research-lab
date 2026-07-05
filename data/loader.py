@@ -28,11 +28,13 @@ UNIVERSE = {
 
 def _cache_path(ticker: str) -> Path:
     safe = ticker.replace("=", "_").replace("/", "_")
-    return CACHE_DIR / f"{safe}.parquet"
+    return CACHE_DIR / f"{safe}_v2.parquet"  # v2: cache always holds full history
 
 
-def _download(ticker: str, start: str) -> pd.DataFrame:
-    raw = yf.download(ticker, start=start, auto_adjust=True, progress=False)
+def _download(ticker: str) -> pd.DataFrame:
+    # Always fetch from DEFAULT_START so one cached file serves any requested
+    # start date via slicing — the cache must never depend on the request.
+    raw = yf.download(ticker, start=DEFAULT_START, auto_adjust=True, progress=False)
     if raw is None or raw.empty:
         raise ValueError(f"No data returned for {ticker}")
     if isinstance(raw.columns, pd.MultiIndex):
@@ -45,21 +47,29 @@ def _download(ticker: str, start: str) -> pd.DataFrame:
 
 
 def load_prices(ticker: str, start: str = DEFAULT_START, max_age_hours: float = 24.0) -> pd.DataFrame:
-    """Daily OHLCV for one ticker, served from the parquet cache when fresh."""
+    """Daily OHLCV for one ticker from `start` onwards.
+
+    The parquet cache always holds the full history (from DEFAULT_START), and
+    the requested start date is applied by slicing — so changing `start` never
+    requires a re-download and always takes effect.
+    """
     CACHE_DIR.mkdir(exist_ok=True)
     path = _cache_path(ticker)
+    df = None
     if path.exists():
         age_hours = (time.time() - path.stat().st_mtime) / 3600.0
         if age_hours < max_age_hours:
-            return pd.read_parquet(path)
-    try:
-        df = _download(ticker, start)
-        df.to_parquet(path)
-        return df
-    except Exception:
-        if path.exists():
-            return pd.read_parquet(path)
-        raise
+            df = pd.read_parquet(path)
+    if df is None:
+        try:
+            df = _download(ticker)
+            df.to_parquet(path)
+        except Exception:
+            if path.exists():
+                df = pd.read_parquet(path)
+            else:
+                raise
+    return df.loc[df.index >= pd.Timestamp(start)]
 
 
 def load_universe(tickers: list[str], start: str = DEFAULT_START) -> pd.DataFrame:
