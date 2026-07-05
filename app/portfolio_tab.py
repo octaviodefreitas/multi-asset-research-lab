@@ -61,7 +61,7 @@ def render() -> None:
             direction = st.radio("Direction", ["Long / Flat", "Long / Short"],
                                  horizontal=True, key="pf_dir")
         with c3:
-            start_year = st.slider("Start year", 2000, 2022, 2010, key="pf_start")
+            start_year = st.slider("Start year", 2000, 2022, 2000, key="pf_start")
             cost_bps = st.slider("Transaction cost (bps)", 0.0, 25.0, 5.0, 0.5,
                                  key="pf_cost")
 

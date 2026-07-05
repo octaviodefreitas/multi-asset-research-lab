@@ -108,7 +108,7 @@ def render() -> None:
                 help="Extend the universe with anything on Yahoo Finance — e.g. "
                      "NVDA, EWJ, MC.PA, GBPUSD=X.",
             )
-            start_year = st.slider("Backtest start year", 2000, 2022, 2010,
+            start_year = st.slider("Backtest start year", 2000, 2022, 2000,
                                    help="From 2000 the sample covers the dot-com crash, the GFC, "
                                         "COVID and the 2022 bear. Assets that launched later "
                                         "(e.g. Bitcoin, 2014) enter when their data begins.")

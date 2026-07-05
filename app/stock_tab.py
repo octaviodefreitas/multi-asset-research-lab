@@ -58,7 +58,7 @@ def render() -> None:
                                       "yardstick for alpha and beta.")
             signal_type = st.selectbox("Signal", signals.SIGNAL_TYPES, key="stock_signal")
         with c3:
-            start_year = st.slider("Start year", 2000, 2022, 2010, key="stock_start",
+            start_year = st.slider("Start year", 2000, 2022, 2000, key="stock_start",
                                    help="From 2000 the sample includes the dot-com crash, "
                                         "the GFC, COVID and the 2022 bear market.")
             direction = st.radio("Direction", ["Long / Flat", "Long / Short"],
