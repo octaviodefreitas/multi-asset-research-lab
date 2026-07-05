@@ -13,7 +13,7 @@ import yfinance as yf
 
 CACHE_DIR = Path(__file__).resolve().parent / "cache"
 
-DEFAULT_START = "2006-01-01"
+DEFAULT_START = "2000-01-01"
 
 # Ticker -> human-readable label, grouped by asset class.
 UNIVERSE = {
@@ -34,7 +34,7 @@ UNIVERSE = {
 
 def _cache_path(ticker: str) -> Path:
     safe = ticker.replace("=", "_").replace("/", "_")
-    return CACHE_DIR / f"{safe}_v2.parquet"  # v2: cache always holds full history
+    return CACHE_DIR / f"{safe}_v3.parquet"  # v3: full history from 2000
 
 
 def _download(ticker: str) -> pd.DataFrame:

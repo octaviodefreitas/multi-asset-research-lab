@@ -35,6 +35,7 @@ SENS_ICH_BASE = [20, 26, 34, 44, 52, 60]
 
 # Famous market stress episodes for chart annotation and the crisis table.
 EVENTS = [
+    ("Dot-com crash", "Dot-com", "2000-03-24", "2002-10-09"),
     ("Global Financial Crisis", "GFC", "2007-10-09", "2009-03-09"),
     ("Eurozone debt crisis", "Euro crisis", "2011-05-02", "2011-10-03"),
     ("China devaluation & oil crash", "2015–16", "2015-08-10", "2016-02-11"),
@@ -107,8 +108,10 @@ def render() -> None:
                 help="Extend the universe with anything on Yahoo Finance — e.g. "
                      "NVDA, EWJ, MC.PA, GBPUSD=X.",
             )
-            start_year = st.slider("Backtest start year", 2006, 2022, 2010,
-                                   help="Assets that launched later (e.g. Bitcoin, 2014) enter when their data begins.")
+            start_year = st.slider("Backtest start year", 2000, 2022, 2010,
+                                   help="From 2000 the sample covers the dot-com crash, the GFC, "
+                                        "COVID and the 2022 bear. Assets that launched later "
+                                        "(e.g. Bitcoin, 2014) enter when their data begins.")
         with c2:
             signal_type = st.selectbox("Signal", signals.SIGNAL_TYPES,
                                        help="MA Crossover: fast vs slow moving average. "
