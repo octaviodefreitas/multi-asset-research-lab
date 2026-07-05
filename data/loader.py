@@ -28,6 +28,8 @@ UNIVERSE = {
     "DBC": "Broad Commodities (DBC)",
     "VNQ": "US Real Estate (VNQ)",
     "EURUSD=X": "EUR/USD FX Spot",
+    "GBPUSD=X": "GBP/USD FX Spot",
+    "JPY=X": "USD/JPY FX Spot",
     "BTC-USD": "Bitcoin (BTC-USD)",
 }
 

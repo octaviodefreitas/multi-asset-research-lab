@@ -22,6 +22,8 @@ ASSET_COLORS = {
     "DBC": "#D9822B",
     "VNQ": "#6FCF97",
     "EURUSD=X": "#56CCF2",
+    "GBPUSD=X": "#2D9CDB",
+    "JPY=X": "#89E0F0",
     "BTC-USD": "#EB5757",
     "EW Portfolio": "#00D4AA",
     "Buy & Hold (EW)": "#8B949E",

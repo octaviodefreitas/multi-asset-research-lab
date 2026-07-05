@@ -10,8 +10,8 @@ from app.theme import ALGO_COLORS, GREY, style_fig
 from data.loader import UNIVERSE, load_prices
 from engine import execution
 
-# FX spot has no consolidated volume tape on Yahoo, so it is excluded here.
-EXEC_UNIVERSE = {t: label for t, label in UNIVERSE.items() if t != "EURUSD=X"}
+# FX spot has no consolidated volume tape on Yahoo, so all pairs are excluded here.
+EXEC_UNIVERSE = {t: label for t, label in UNIVERSE.items() if not t.endswith("=X")}
 
 ALGO_BLURBS = {
     "TWAP": "**TWAP** (Time-Weighted Average Price) slices the order into equal pieces over the horizon. Simple and predictable, but ignores when the market actually trades.",
