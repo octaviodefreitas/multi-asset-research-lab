@@ -23,9 +23,13 @@ st.markdown(
         analysis across equities, bonds, gold, FX, oil and crypto.
       </p>
       <p style="color: #E6EDF3; font-size: 0.95rem; margin-top: 0.35rem;">
-        Built by <b>Octavio De Freitas</b> ·
+        Built by <a href="https://www.linkedin.com/in/octavio-de-freitas"
+           style="color: #E6EDF3; text-decoration: none;"><b>Octavio De Freitas</b></a> ·
         <a href="https://github.com/octaviodefreitas/multi-asset-research-lab"
-           style="color: #00D4AA; text-decoration: none;">View source on GitHub</a>
+           style="color: #00D4AA; text-decoration: none;">View source on GitHub</a> ·
+        Feedback welcome —
+        <a href="https://www.linkedin.com/in/octavio-de-freitas"
+           style="color: #00D4AA; text-decoration: none;">connect on LinkedIn</a>
       </p>
     </div>
     """,
@@ -114,6 +118,9 @@ st.markdown(
     "Built by Octavio De Freitas · "
     "<a href='https://github.com/octaviodefreitas/multi-asset-research-lab' "
     "style='color:#00D4AA; text-decoration:none;'>GitHub</a> · "
+    "<a href='https://www.linkedin.com/in/octavio-de-freitas' "
+    "style='color:#00D4AA; text-decoration:none;'>LinkedIn</a> — questions and "
+    "feedback welcome · "
     "Data: Yahoo Finance (daily, adjusted). Simulated research only — not investment advice.</p>",
     unsafe_allow_html=True,
 )
