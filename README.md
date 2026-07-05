@@ -17,10 +17,13 @@ execution-quality analysis, built with Python, pandas and Streamlit.
 - Universe of six asset classes: US equities (SPY), US bonds (AGG), gold (GLD),
   EUR/USD FX spot, crude oil (USO) and Bitcoin (BTC-USD), via free daily data
   from Yahoo Finance with a local parquet cache.
-- Three signal families — moving-average crossover (incl. the classic 50/200
-  golden cross), time-series momentum, and z-score mean reversion
-  (countertrend) — plus an optional volatility-targeting overlay, all fully
-  vectorized with pandas.
+- Four signal families — moving-average crossover (incl. the classic 50/200
+  golden cross), time-series momentum, z-score mean reversion (countertrend)
+  and the Ichimoku cloud — plus an optional volatility-targeting overlay, all
+  fully vectorized with pandas.
+- **Crisis playbook**: famous stress episodes (GFC, COVID, 2022 bear, ...)
+  shaded on the drawdown chart and tabulated strategy-vs-buy-and-hold — the
+  "crisis alpha" story allocators actually ask about.
 - **No lookahead bias**: a signal observed at the close of day *t* is only
   applied to the return from *t* to *t+1* (and there is a unit test proving it).
 - Backtest net of transaction costs, per asset and as an equal-weight portfolio,

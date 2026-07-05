@@ -85,6 +85,34 @@ def test_mean_reversion_long_only_never_short(close):
     assert (sig.fillna(0) >= 0).all().all()
 
 
+def test_ichimoku_no_lookahead(close):
+    sig = signals.ichimoku(close, conversion=9, base=26)
+    tampered = close.copy()
+    tampered.iloc[300:] *= 4.0
+    sig_tampered = signals.ichimoku(tampered, conversion=9, base=26)
+    pd.testing.assert_frame_equal(sig.iloc[:300], sig_tampered.iloc[:300])
+
+
+def test_ichimoku_uptrend_above_cloud_is_long():
+    trend = pd.DataFrame({"A": np.linspace(100, 300, 300)},
+                         index=pd.bdate_range("2015-01-01", periods=300))
+    sig = signals.ichimoku(trend, conversion=9, base=26)
+    # warmup = span_b (52) + displacement (26); afterwards price sits above the cloud
+    assert (sig["A"].iloc[100:] == 1.0).all()
+
+
+def test_ichimoku_downtrend_below_cloud_is_short():
+    trend = pd.DataFrame({"A": np.linspace(300, 100, 300)},
+                         index=pd.bdate_range("2015-01-01", periods=300))
+    sig = signals.ichimoku(trend, conversion=9, base=26)
+    assert (sig["A"].iloc[100:] == -1.0).all()
+
+
+def test_ichimoku_long_only_never_short(close):
+    sig = signals.ichimoku(close, 9, 26, long_only=True)
+    assert (sig.fillna(0) >= 0).all().all()
+
+
 def test_vol_target_caps_leverage(close):
     rets = close.pct_change()
     sig = signals.ma_crossover(close, 5, 20)

@@ -17,6 +17,8 @@ WF_GRIDS = {
     "Time-Series Momentum": [{"lookback": lb} for lb in (21, 63, 126, 252)],
     "Mean Reversion (Z-Score)": [{"lookback": lb, "z_entry": z}
                                  for lb in (10, 20, 40, 60) for z in (0.5, 1.0, 1.5)],
+    "Ichimoku Cloud": [{"conversion": c, "base": b}
+                       for c, b in [(7, 20), (9, 26), (12, 34), (18, 52)]],
     "Combined": [{"short": s, "long": l, "lookback": lb}
                  for s, l in [(20, 100), (50, 200)] for lb in (63, 126, 252)],
 }
@@ -27,6 +29,18 @@ SENS_LONGS = [100, 125, 150, 200, 250, 300]
 SENS_MOM_LOOKBACKS = [21, 42, 63, 84, 126, 168, 252]
 SENS_MR_LOOKBACKS = [10, 15, 20, 30, 40, 60]
 SENS_MR_Z = [0.5, 0.75, 1.0, 1.5, 2.0]
+SENS_ICH_CONV = [5, 7, 9, 12, 15, 18]
+SENS_ICH_BASE = [20, 26, 34, 44, 52, 60]
+
+# Famous market stress episodes for chart annotation and the crisis table.
+EVENTS = [
+    ("Global Financial Crisis", "GFC", "2007-10-09", "2009-03-09"),
+    ("Eurozone debt crisis", "Euro crisis", "2011-05-02", "2011-10-03"),
+    ("China devaluation & oil crash", "2015–16", "2015-08-10", "2016-02-11"),
+    ("Q4 2018 selloff", "Q4 '18", "2018-10-01", "2018-12-24"),
+    ("COVID crash", "COVID", "2020-02-19", "2020-03-23"),
+    ("2022 inflation bear market", "2022 bear", "2022-01-03", "2022-10-12"),
+]
 
 METRIC_FORMATS = {
     "CAGR": "{:.2%}", "Ann. Vol": "{:.2%}", "Sharpe": "{:.2f}", "Sortino": "{:.2f}",
@@ -58,6 +72,10 @@ def sensitivity_grid(panel: pd.DataFrame, signal_type: str, long_only: bool,
         return pd.DataFrame(data, index=SENS_SHORTS, columns=SENS_LONGS)
     if signal_type == "Time-Series Momentum":
         return pd.Series({lb: sharpe_of({"lookback": lb}) for lb in SENS_MOM_LOOKBACKS})
+    if signal_type == "Ichimoku Cloud":
+        data = [[sharpe_of({"conversion": c, "base": b}) for b in SENS_ICH_BASE]
+                for c in SENS_ICH_CONV]
+        return pd.DataFrame(data, index=SENS_ICH_CONV, columns=SENS_ICH_BASE)
     data = [[sharpe_of({"lookback": lb, "z_entry": z}) for z in SENS_MR_Z]
             for lb in SENS_MR_LOOKBACKS]
     return pd.DataFrame(data, index=SENS_MR_LOOKBACKS, columns=SENS_MR_Z)
@@ -118,6 +136,15 @@ def render() -> None:
                 params["z_entry"] = st.slider("Entry threshold (std devs)", 0.5, 2.5, 1.0, 0.25,
                                               help="How stretched the price must be before fading it. "
                                                    "Wider bands trade less but with more conviction.")
+        if signal_type == "Ichimoku Cloud":
+            with p1:
+                params["conversion"] = st.slider("Conversion line window (days)", 5, 20, 9, 1,
+                                                 help="Tenkan-sen: the fast midpoint line.")
+            with p2:
+                params["base"] = st.slider("Base line window (days)", 20, 60, 26, 2,
+                                           help="Kijun-sen: the slow midpoint line, also the cloud's "
+                                                "forward displacement. 9 / 26 / 52 are Hosoda's "
+                                                "classic settings; the cloud span is 2× this window.")
         target_vol = 0.10
         if vol_target_on:
             with p4:
@@ -191,14 +218,53 @@ def render() -> None:
                                 fill="tozeroy", line=dict(color=PRIMARY, width=1.5)))
     dd_fig.add_trace(go.Scatter(x=bench.index, y=metrics.drawdown_series(bench), name="Buy & Hold",
                                 line=dict(color=RED, width=1.2, dash="dot")))
-    style_fig(dd_fig, "Drawdown — % below the previous peak", height=300, y_title="Drawdown")
+    for _, short_name, ev_start, ev_end in EVENTS:
+        s = max(pd.Timestamp(ev_start), port.index[0])
+        e = min(pd.Timestamp(ev_end), port.index[-1])
+        if s < e:
+            dd_fig.add_vrect(x0=s, x1=e, fillcolor=GREY, opacity=0.10, line_width=0,
+                             annotation_text=short_name, annotation_position="top left",
+                             annotation_font_size=10, annotation_font_color=GREY)
+    style_fig(dd_fig, "Drawdown — % below the previous peak (stress episodes shaded)",
+              height=320, y_title="Drawdown")
     dd_fig.update_yaxes(tickformat=".0%")
     st.plotly_chart(dd_fig, width="stretch")
     st.caption(
         "**How to read this:** every dip shows how far the portfolio was underwater versus its "
-        "prior high. Shallower and shorter dips than buy & hold is the main practical benefit "
-        "of trend-following."
+        "prior high; the shaded bands mark famous market stress episodes. Shallower and shorter "
+        "dips than buy & hold is the main practical benefit of trend-following — but note the "
+        "pattern in the bands: slow crises (2008, 2022) suit trend signals, which have time to "
+        "flip defensive, while lightning crashes (COVID: −30% in 23 days) hit them before they "
+        "can react. The volatility-targeting overlay above is the standard defense — try it."
     )
+
+    crisis_rows = []
+    for full_name, _, ev_start, ev_end in EVENTS:
+        s, e = pd.Timestamp(ev_start), pd.Timestamp(ev_end)
+        if s < port.index[0] or e > port.index[-1]:
+            continue
+        crisis_rows.append({
+            "Episode": full_name,
+            "Period": f"{s:%b %Y} – {e:%b %Y}",
+            "Strategy": (1 + port.loc[s:e]).prod() - 1,
+            "Buy & Hold": (1 + bench.loc[s:e]).prod() - 1,
+        })
+    if crisis_rows:
+        crisis = pd.DataFrame(crisis_rows)
+        crisis["Difference"] = crisis["Strategy"] - crisis["Buy & Hold"]
+        st.markdown("##### Crisis playbook — the same episodes, in numbers")
+        st.dataframe(
+            crisis.style.format({"Strategy": "{:+.1%}", "Buy & Hold": "{:+.1%}",
+                                 "Difference": "{:+.1%}"}),
+            width="stretch", hide_index=True,
+        )
+        st.caption(
+            "**How to read this:** the strategy's return over each stress episode versus "
+            "passively holding the same assets. Positive differences in crises are what "
+            "allocators call *crisis alpha* — the main reason institutions pay for "
+            "trend-following. Where the difference is negative (fast crashes), that is the "
+            "known cost of the approach, not a malfunction; no strategy wins in every regime."
+        )
 
     # ------------------------------------------------------------- tearsheet
     st.markdown("#### Performance through time")
@@ -317,9 +383,12 @@ def render() -> None:
                 "means the 'best' parameter is likely noise."
             )
         else:
-            x_title, y_title_h = (("Slow MA window", "Fast MA window")
-                                  if signal_type in ("MA Crossover", "Combined")
-                                  else ("Entry threshold (std devs)", "Z-score lookback"))
+            if signal_type in ("MA Crossover", "Combined"):
+                x_title, y_title_h = "Slow MA window", "Fast MA window"
+            elif signal_type == "Ichimoku Cloud":
+                x_title, y_title_h = "Base line window", "Conversion line window"
+            else:
+                x_title, y_title_h = "Entry threshold (std devs)", "Z-score lookback"
             sh = go.Figure(go.Heatmap(
                 z=grid.values, x=grid.columns, y=grid.index,
                 colorscale="RdYlGn", zmid=0,
@@ -327,9 +396,12 @@ def render() -> None:
                 colorbar=dict(title="Sharpe"),
                 hovertemplate=f"{y_title_h} %{{y}}, {x_title.lower()} %{{x}}: "
                               "Sharpe %{z:.2f}<extra></extra>"))
-            cur = ((params["long"], params["short"])
-                   if signal_type in ("MA Crossover", "Combined")
-                   else (params["z_entry"], params["lookback"]))
+            if signal_type in ("MA Crossover", "Combined"):
+                cur = (params["long"], params["short"])
+            elif signal_type == "Ichimoku Cloud":
+                cur = (params["base"], params["conversion"])
+            else:
+                cur = (params["z_entry"], params["lookback"])
             sh.add_trace(go.Scatter(x=[cur[0]], y=[cur[1]], mode="markers", name="Your setting",
                                     marker=dict(symbol="star", size=15, color="#E6EDF3",
                                                 line=dict(color="#0E1117", width=1))))

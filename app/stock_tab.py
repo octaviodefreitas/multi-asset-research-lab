@@ -82,6 +82,13 @@ def render() -> None:
             with p2:
                 params["z_entry"] = st.slider("Entry threshold (std devs)", 0.5, 2.5, 1.0, 0.25,
                                               key="stock_mrz")
+        if signal_type == "Ichimoku Cloud":
+            with p1:
+                params["conversion"] = st.slider("Conversion line window (days)", 5, 20, 9, 1,
+                                                 key="stock_ichc")
+            with p2:
+                params["base"] = st.slider("Base line window (days)", 20, 60, 26, 2,
+                                           key="stock_ichb")
 
     if signal_type in ("MA Crossover", "Combined") and params["short"] >= params["long"]:
         st.error("The fast MA window must be shorter than the slow MA window.")

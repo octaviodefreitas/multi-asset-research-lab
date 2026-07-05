@@ -50,6 +50,36 @@ def mean_reversion(close: pd.DataFrame, lookback: int = 20, z_entry: float = 1.0
     return sig
 
 
+def _midpoint(close: pd.DataFrame, window: int) -> pd.DataFrame:
+    return (close.rolling(window).max() + close.rolling(window).min()) / 2.0
+
+
+def ichimoku(close: pd.DataFrame, conversion: int = 9, base: int = 26,
+             span_b: int | None = None, long_only: bool = False) -> pd.DataFrame:
+    """Ichimoku Kinko Hyo cloud signal (Goichi Hosoda's classic 9/26/52 system).
+
+    Long when price trades above the cloud, short below it, flat inside it.
+    The cloud spans are computed from data available `base` days ago (the
+    classic forward displacement), so the signal at t is strictly causal.
+    Midpoints use rolling closes (the textbook version uses high/low; on a
+    close-only panel this is the standard approximation).
+    """
+    if span_b is None:
+        span_b = 2 * base
+    tenkan = _midpoint(close, conversion)
+    kijun = _midpoint(close, base)
+    span_a = ((tenkan + kijun) / 2.0).shift(base)
+    span_b_line = _midpoint(close, span_b).shift(base)
+    upper = np.maximum(span_a, span_b_line)
+    lower = np.minimum(span_a, span_b_line)
+    sig = pd.DataFrame(0.0, index=close.index, columns=close.columns)
+    sig = sig.mask(close > upper, 1.0).mask(close < lower, -1.0)
+    sig = sig.where(upper.notna())
+    if long_only:
+        sig = sig.clip(lower=0.0)
+    return sig
+
+
 def combined(close: pd.DataFrame, short: int, long: int, lookback: int,
              long_only: bool = False) -> pd.DataFrame:
     """Equal-weight blend of MA crossover and momentum. Positions are
@@ -67,7 +97,8 @@ def vol_target(signal: pd.DataFrame, returns: pd.DataFrame, target_vol: float = 
     return signal * scale
 
 
-SIGNAL_TYPES = ("MA Crossover", "Time-Series Momentum", "Mean Reversion (Z-Score)", "Combined")
+SIGNAL_TYPES = ("MA Crossover", "Time-Series Momentum", "Mean Reversion (Z-Score)",
+                "Ichimoku Cloud", "Combined")
 
 
 def build_signal(close: pd.DataFrame, signal_type: str, long_only: bool = False,
@@ -81,6 +112,8 @@ def build_signal(close: pd.DataFrame, signal_type: str, long_only: bool = False,
         sig = momentum(close, params["lookback"], params.get("skip", 0), long_only)
     elif signal_type == "Mean Reversion (Z-Score)":
         sig = mean_reversion(close, params["lookback"], params["z_entry"], long_only)
+    elif signal_type == "Ichimoku Cloud":
+        sig = ichimoku(close, params["conversion"], params["base"], long_only=long_only)
     elif signal_type == "Combined":
         sig = combined(close, params["short"], params["long"], params["lookback"], long_only)
     else:
