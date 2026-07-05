@@ -14,12 +14,13 @@ execution-quality analysis, built with Python, pandas and Streamlit.
 ## What it does
 
 **Tab 1 — Signal Research & Backtest**
-- Universe of 14 assets across every major class — US / international /
-  emerging-market equities (SPY, EFA, EEM), aggregate / long-duration /
-  high-yield bonds (AGG, TLT, HYG), gold / oil / broad commodities (GLD, USO,
-  DBC), US real estate (VNQ), three FX pairs (EUR/USD, GBP/USD, USD/JPY) and
-  Bitcoin — plus free-text input to add any Yahoo Finance ticker. Daily data
-  with a local parquet cache.
+- Universe of 16 assets across every major class, global on both the equity
+  and bond side — US / international / emerging-market equities (SPY, EFA,
+  EEM); US aggregate / long-duration / high-yield / international government /
+  EM sovereign bonds (AGG, TLT, HYG, BWX, EMB); gold / oil / broad commodities
+  (GLD, USO, DBC); US real estate (VNQ); three FX pairs (EUR/USD, GBP/USD,
+  USD/JPY) and Bitcoin — plus free-text input to add any Yahoo Finance ticker.
+  Daily data with a local parquet cache.
 - Four signal families — moving-average crossover (incl. the classic 50/200
   golden cross), time-series momentum, z-score mean reversion (countertrend)
   and the Ichimoku cloud — plus an optional volatility-targeting overlay, all

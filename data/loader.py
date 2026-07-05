@@ -23,6 +23,8 @@ UNIVERSE = {
     "AGG": "US Aggregate Bonds (AGG)",
     "TLT": "Long-Term US Treasuries (TLT)",
     "HYG": "High-Yield Credit (HYG)",
+    "BWX": "Intl Government Bonds (BWX)",
+    "EMB": "EM Sovereign Debt (EMB)",
     "GLD": "Gold (GLD)",
     "USO": "Crude Oil (USO)",
     "DBC": "Broad Commodities (DBC)",

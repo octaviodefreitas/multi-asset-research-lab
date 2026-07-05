@@ -1,7 +1,7 @@
 {
   "freeze_date": "2026-07-05",
-  "note": "Strategy parameters frozen at this commit. All performance after freeze_date is out-of-sample by construction: the commit timestamp proves these settings were fixed before the data existed. The universe was finalized at 14 assets over the freeze weekend (2026-07-05), before the first live trading day, so no live history was ever altered. This file is now locked: any further change resets the live track record.",
-  "universe": ["SPY", "EFA", "EEM", "AGG", "TLT", "HYG", "GLD", "USO", "DBC", "VNQ", "EURUSD=X", "GBPUSD=X", "JPY=X", "BTC-USD"],
+  "note": "Strategy parameters frozen at this commit. All performance after freeze_date is out-of-sample by construction: the commit timestamp proves these settings were fixed before the data existed. The universe was finalized at 16 assets over the freeze weekend (2026-07-05), before the first live trading day on 2026-07-06, so no live history was ever altered. This file is locked from the first live bar onward: any further change resets the live track record.",
+  "universe": ["SPY", "EFA", "EEM", "AGG", "TLT", "HYG", "BWX", "EMB", "GLD", "USO", "DBC", "VNQ", "EURUSD=X", "GBPUSD=X", "JPY=X", "BTC-USD"],
   "signal_type": "Combined",
   "params": {"short": 50, "long": 200, "lookback": 126},
   "direction": "long_short",

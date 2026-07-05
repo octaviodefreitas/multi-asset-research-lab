@@ -17,6 +17,8 @@ ASSET_COLORS = {
     "AGG": "#9B8AFB",
     "TLT": "#7A6AE0",
     "HYG": "#C29BF2",
+    "BWX": "#B39DDB",
+    "EMB": "#8E6FC8",
     "GLD": "#F2C94C",
     "USO": "#F2994A",
     "DBC": "#D9822B",
