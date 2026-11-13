@@ -7,7 +7,8 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from app.theme import ALGO_COLORS, GREY, style_fig
-from data.loader import ALL_ASSETS, load_prices
+from app.assets import ALL_ASSETS
+from data.loader import load_prices
 from engine import execution
 
 # FX spot has no consolidated volume tape on Yahoo, so all pairs are excluded here.

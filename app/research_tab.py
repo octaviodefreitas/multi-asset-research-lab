@@ -8,7 +8,8 @@ import streamlit as st
 
 from app import export
 from app.theme import ASSET_COLORS, GREY, PRIMARY, RED, short_label, style_fig
-from data.loader import ALL_ASSETS, UNIVERSE, load_prices, load_universe
+from app.assets import ALL_ASSETS
+from data.loader import UNIVERSE, load_prices, load_universe
 from engine import backtest, metrics, signals
 
 # Parameter grids searched in-sample by the walk-forward optimizer.

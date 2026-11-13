@@ -9,7 +9,8 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from app.theme import ACCENT, GOLD, GREY, PRIMARY, RED, style_fig
-from data.loader import ALL_ASSETS, UNIVERSE, load_universe
+from app.assets import ALL_ASSETS
+from data.loader import UNIVERSE, load_universe
 from engine import backtest, factors, metrics, portfolio, risk, signals
 
 # Classic textbook parameters per signal; full parameter control lives in the
