@@ -8,7 +8,7 @@ import streamlit as st
 
 from app import export
 from app.theme import ASSET_COLORS, GREY, PRIMARY, RED, short_label, style_fig
-from data.loader import UNIVERSE, load_prices, load_universe
+from data.loader import ALL_ASSETS, UNIVERSE, load_prices, load_universe
 from engine import backtest, metrics, signals
 
 # Parameter grids searched in-sample by the walk-forward optimizer.
@@ -96,12 +96,13 @@ def render() -> None:
         c1, c2, c3 = st.columns([1.4, 1, 1])
         with c1:
             tickers = st.multiselect(
-                "Asset universe", options=list(UNIVERSE),
-                default=list(UNIVERSE), format_func=UNIVERSE.get,
+                "Asset universe", options=list(ALL_ASSETS),
+                default=list(UNIVERSE), format_func=ALL_ASSETS.get,
                 help="12 asset classes: US / intl / EM equities, aggregate / long-duration / "
                      "high-yield bonds, gold / oil / broad commodities, real estate, FX and "
                      "crypto. Each is traded independently by the signal, then combined "
-                     "equal-weight.",
+                     "equal-weight. Optional: add Brent crude and US natural gas "
+                     "futures from the list.",
             )
             custom_raw = st.text_input(
                 "Add any tickers (comma-separated Yahoo symbols)", "",
@@ -297,7 +298,7 @@ def render() -> None:
         pfig = go.Figure()
         for t in tickers:
             pfig.add_trace(go.Scatter(x=bt.equity.index, y=bt.equity[t],
-                                      name=UNIVERSE.get(t, t),
+                                      name=ALL_ASSETS.get(t, t),
                                       line=dict(width=1.1, color=ASSET_COLORS.get(t)),
                                       opacity=0.6))
         pfig.add_trace(go.Scatter(x=port_eq.index, y=port_eq, name="Strategy, EW Portfolio",
@@ -468,7 +469,7 @@ def render() -> None:
     st.markdown("#### Per-asset breakdown (net of costs)")
     rows = {}
     for t in tickers:
-        rows[UNIVERSE.get(t, t)] = metrics.summary(
+        rows[ALL_ASSETS.get(t, t)] = metrics.summary(
             bt.strategy_returns[t], positions=bt.positions[t], turnover=bt.turnover[t])
     rows["EW Portfolio"] = port_stats
     rows["Passive EW (rebalanced)"] = metrics.summary(bench)

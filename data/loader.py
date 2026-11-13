@@ -35,6 +35,16 @@ UNIVERSE = {
     "BTC-USD": "Bitcoin (BTC-USD)",
 }
 
+# Optional energy futures: selectable in the research, portfolio and execution
+# tabs but NOT in the default universe or the frozen live config. Yahoo
+# continuous front-month series (contracts spliced at each roll, unadjusted).
+ENERGY = {
+    "BZ=F": "Brent Crude futures (BZ=F)",
+    "NG=F": "US Natural Gas futures (NG=F)",
+}
+
+ALL_ASSETS = {**UNIVERSE, **ENERGY}
+
 
 def _cache_path(ticker: str) -> Path:
     safe = ticker.replace("=", "_").replace("/", "_")

@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from app.theme import ACCENT, GOLD, GREY, PRIMARY, RED, style_fig
-from data.loader import UNIVERSE, load_universe
+from data.loader import ALL_ASSETS, UNIVERSE, load_universe
 from engine import backtest, factors, metrics, portfolio, risk, signals
 
 # Classic textbook parameters per signal; full parameter control lives in the
@@ -51,8 +51,8 @@ def render() -> None:
     with st.container(border=True):
         c1, c2, c3 = st.columns([1.5, 1, 1])
         with c1:
-            tickers = st.multiselect("Asset universe", options=list(UNIVERSE),
-                                     default=list(UNIVERSE), format_func=UNIVERSE.get,
+            tickers = st.multiselect("Asset universe", options=list(ALL_ASSETS),
+                                     default=list(UNIVERSE), format_func=ALL_ASSETS.get,
                                      key="pf_universe")
         with c2:
             signal_type = st.selectbox("Signal", signals.SIGNAL_TYPES,
@@ -103,7 +103,7 @@ def render() -> None:
                  width="stretch")
 
     latest = pd.DataFrame({name: w.iloc[-1] for name, w in schemes.items()})
-    latest.index = [UNIVERSE.get(t, t) for t in latest.index]
+    latest.index = [ALL_ASSETS.get(t, t) for t in latest.index]
     wfig = go.Figure()
     for name in schemes:
         wfig.add_trace(go.Bar(x=latest.index, y=latest[name], name=name,
